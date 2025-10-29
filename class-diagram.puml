@@ -1,0 +1,58 @@
+@startuml
+skinparam style strictuml
+skinparam classAttributeIconSize 0
+
+package "Server (Node/Express)" {
+  class SearchController {
+    +search(req, res): Promise<void>
+  }
+
+  class TmdbService {
+    +searchMovies(query: string): Promise<List<Movie>>
+  }
+
+  class AiQueryService {
+    +search(query: string): Promise<List<Movie>>  <<stub>>
+  }
+
+  class Movie {
+    -id: number
+    -title: string
+    -overview: string
+    -posterPath: string
+    -releaseDate: string
+    +constructor(data)
+  }
+
+  class searchRoutes {
+    +router: Router
+  }
+
+  SearchController --> TmdbService : uses
+  SearchController --> AiQueryService : (future) uses
+  TmdbService --> Movie : returns
+  searchRoutes --> SearchController : calls
+}
+
+package "Client (React)" {
+  class App {
+    -query: string
+    -movies: Movie[]
+    +handleSearch(q): void
+    +handleAiSearch(q): void
+  }
+
+  class SearchBar {
+    +onSearch(q): void
+    +onAiSearch(q): void
+  }
+
+  class MovieList {
+    +movies: Movie[]
+  }
+
+  App --> SearchBar
+  App --> MovieList
+}
+
+@enduml

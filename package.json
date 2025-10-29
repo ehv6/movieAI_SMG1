@@ -1,0 +1,8 @@
+{
+  "name": "mvc-movie-demo",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "test": "npm --prefix server test && npm --prefix client test"
+  }
+}
