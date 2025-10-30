@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "scripts": {
     "dev": "node src/server.js",
-    "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand"
+    "test": "cross-env NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --runInBand"
   },
   "dependencies": {
     "axios": "^1.7.7",
@@ -15,6 +15,7 @@
     "mvc-movie-demo": "file:.."
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "jest": "^29.7.0",
     "supertest": "^6.3.4"
   }

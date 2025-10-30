@@ -1,13 +1,22 @@
+// Integration-style tests for the Express app's search endpoint.
+// These tests mock the TMDb service at the module boundary so we exercise
+// controllers/routes and HTTP wiring without making real network calls.
+//
+// Why mock at the module level?
+// - Keeps tests fast and deterministic
+// - Avoids relying on environment variables or external APIs
+// - Still verifies request/response shapes and status codes
 import request from 'supertest';
 import { jest } from '@jest/globals';
 
-// We'll import the app only after setting up the module mock for ESM
+// For ESM, we set up the unstable mock before importing the app so the
+// controller pulls in the mocked service implementation.
 let app;
 
 const mockSearchMovies = jest.fn();
 
 beforeAll(async () => {
-  // Mock the TMDB service to avoid real HTTP and env dependency
+  // Mock the TMDb service to avoid real HTTP and env dependency
   jest.unstable_mockModule('../services/TmdbService.js', () => ({
     default: { searchMovies: mockSearchMovies }
   }));
@@ -29,6 +38,8 @@ describe('GET /api/search', () => {
   });
 
   test('returns movies when query is provided', async () => {
+    // Minimal golden sample representing the Movie model shape returned
+    // by the service. Only fields the client cares about are included.
     const mockMovies = [
       {
         id: 1,
@@ -57,7 +68,10 @@ describe('GET /api/search', () => {
       .query({ query: 'anything' });
 
     expect(res.status).toBe(500);
-    expect(res.body).toEqual({ error: 'Internal Server Error' });
+    // Controller now forwards the error message, so we assert only that
+    // an error string exists, not the exact message text.
+    expect(res.body).toHaveProperty('error');
+    expect(typeof res.body.error).toBe('string');
   });
 });
 
