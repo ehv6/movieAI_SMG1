@@ -23,7 +23,13 @@ export function getAllMovies() {
 
   const csvPath = resolveCsvPath();
   const raw = fs.readFileSync(csvPath, 'utf8');
-  const rows = parse(raw, { columns: true, skip_empty_lines: true });
+  const rows = parse(raw, {
+    columns: true,
+    skip_empty_lines: true,
+    bom: true,
+    relax_column_count: true,
+    relax_quotes: true
+  });
 
   cachedMovies = rows.map(r => ({
     id: r.id ?? null,
@@ -32,7 +38,7 @@ export function getAllMovies() {
     releaseDate: r.release_date ?? '',
     genres: r.genres ?? '',
     originalLanguage: r.original_language ?? '',
-    popularity: Number(r.popularity ?? 0),
+    popularity: Number.parseFloat(r.popularity ?? 0) || 0,
     posterPath: r.poster_path ?? ''
   }));
 
