@@ -10,6 +10,7 @@
   "dependencies": {
     "axios": "^1.7.7",
     "cors": "^2.8.5",
+    "csv-parse": "^6.1.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "mvc-movie-demo": "file:.."
