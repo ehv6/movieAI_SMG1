@@ -10,6 +10,8 @@ export async function search(req, res) {
     return res.json({ movies });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    const status = err && err.status ? err.status : 500;
+    const message = err && err.message ? err.message : 'Internal Server Error';
+    return res.status(status).json({ error: message });
   }
 }

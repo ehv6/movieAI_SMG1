@@ -1,3 +1,6 @@
+// Component tests for the React client. We mock `fetch` to simulate
+// backend responses so tests are fast and deterministic, and we assert
+// on DOM behavior rather than network effects.
 import React from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
