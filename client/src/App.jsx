@@ -29,9 +29,24 @@ export default function App() {
     }
   }
 
-  function handleAiSearch(query) {
-    // Stub for demo
-    alert('AI Search not implemented yet. (CSV/NLP stub)');
+  async function handleAiSearch(query) {
+    try {
+      setLoading(true);
+      setError('');
+      const res = await fetch(`/api/ai-search?query=${encodeURIComponent(query)}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Request failed');
+      }
+      const data = await res.json();
+      setMovies(data.movies ?? []);
+      setSelected(null);
+    } catch (e) {
+      setError(e.message);
+      setMovies([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
