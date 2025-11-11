@@ -153,8 +153,8 @@ function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
   if (loading) {
     return (
       <div className="carousel-row mb-8">
-        <h2 className="text-2xl font-bold text-white mb-4">{title}</h2>
-        <div className="text-white">Loading...</div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{title}</h2>
+        <div className="text-gray-900 dark:text-white">Loading...</div>
       </div>
     );
   }
@@ -169,7 +169,7 @@ function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeaveCarousel}
     >
-      <h2 className="text-2xl font-bold text-white mb-4">{title}</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{title}</h2>
       <div className="relative group">
         {/* Previous Arrow */}
         {showPrevArrow && (
