@@ -1,7 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
 import './MovieCarousel.css';
+import { useI18n } from '../contexts/I18nContext';
 
 function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
+  const { t, language } = useI18n();
   const carouselRef = useRef(null);
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,12 +20,13 @@ function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
   const [isHovering, setIsHovering] = useState(false);
   const autoScrollIntervalRef = useRef(null);
 
-  // Fetch movies on mount
+  // Fetch movies on mount and when language changes
   useEffect(() => {
     async function fetchMovies() {
       try {
         setLoading(true);
-        const res = await fetch(fetchUrl);
+        const url = `${fetchUrl}${fetchUrl.includes('?') ? '&' : '?'}lang=${language}`;
+        const res = await fetch(url);
         if (!res.ok) throw new Error('Failed to fetch');
         const data = await res.json();
         setMovies(data);
@@ -35,7 +38,7 @@ function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
       }
     }
     fetchMovies();
-  }, [fetchUrl]);
+  }, [fetchUrl, language]);
 
   // Update arrow visibility
   const updateArrowVisibility = () => {
@@ -154,7 +157,7 @@ function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
     return (
       <div className="carousel-row mb-8">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{title}</h2>
-        <div className="text-gray-900 dark:text-white">Loading...</div>
+        <div className="text-gray-900 dark:text-white">{t('loading')}</div>
       </div>
     );
   }
@@ -222,7 +225,7 @@ function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
                 if (onMovieSelect) {
                   // Always fetch full movie details to ensure we have complete data
                   try {
-                    const res = await fetch(`/api/movies/details/${movie.id}`);
+                    const res = await fetch(`/api/movies/details/${movie.id}?lang=${language}`);
                     if (res.ok) {
                       const fullMovie = await res.json();
                       onMovieSelect(fullMovie);

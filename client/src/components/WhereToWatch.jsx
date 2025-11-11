@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useI18n } from '../contexts/I18nContext';
 
 export default function WhereToWatch({ movieId }) {
+  const { t } = useI18n();
   const [providers, setProviders] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,7 +27,7 @@ export default function WhereToWatch({ movieId }) {
     fetchProviders();
   }, [movieId]);
 
-  if (loading) return <p className="text-gray-500">Loading streaming info...</p>;
+  if (loading) return <p className="text-gray-500">{t('loadingStreamingInfo')}</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
   if (!providers) return null;
@@ -38,27 +40,27 @@ export default function WhereToWatch({ movieId }) {
     <div className="mt-4">
       {hasFlatrate && (
         <div className="mb-4">
-          <h4 className="font-semibold text-gray-900 dark:text-gray-100">Stream</h4>
+          <h4 className="font-semibold text-gray-900 dark:text-gray-100">{t('stream')}</h4>
           <ProviderRow list={providers.flatrate} />
         </div>
       )}
 
       {hasRent && (
         <div className="mb-4">
-          <h4 className="font-semibold text-gray-900 dark:text-gray-100">Rent</h4>
+          <h4 className="font-semibold text-gray-900 dark:text-gray-100">{t('rent')}</h4>
           <ProviderRow list={providers.rent} />
         </div>
       )}
 
       {hasBuy && (
         <div>
-          <h4 className="font-semibold text-gray-900 dark:text-gray-100">Buy</h4>
+          <h4 className="font-semibold text-gray-900 dark:text-gray-100">{t('buy')}</h4>
           <ProviderRow list={providers.buy} />
         </div>
       )}
 
       {!hasFlatrate && !hasRent && !hasBuy && (
-        <p className="text-gray-500 dark:text-gray-400">No streaming data available.</p>
+        <p className="text-gray-500 dark:text-gray-400">{t('noStreamingData')}</p>
       )}
     </div>
   );

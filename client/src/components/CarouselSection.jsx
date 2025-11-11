@@ -1,18 +1,21 @@
 import React from 'react';
 import MovieCarouselRow from './MovieCarouselRow.jsx';
+import { useI18n } from '../contexts/I18nContext';
 
 export default function CarouselSection({ onMovieSelect }) {
+  const { t } = useI18n();
+  
   return (
     <div className="bg-gray-100 dark:bg-gray-900 py-8 px-12">
-      <MovieCarouselRow title="Featured Movies" fetchUrl="/api/movies/featured" onMovieSelect={onMovieSelect} />
-      <MovieCarouselRow title="New Releases" fetchUrl="/api/movies/new-releases" onMovieSelect={onMovieSelect} />
-      <MovieCarouselRow title="Action" fetchUrl="/api/movies/action" onMovieSelect={onMovieSelect} />
-      <MovieCarouselRow title="Sci-Fi" fetchUrl="/api/movies/scifi" onMovieSelect={onMovieSelect} />
-      <MovieCarouselRow title="Comedy" fetchUrl="/api/movies/comedy" onMovieSelect={onMovieSelect} />
-      <MovieCarouselRow title="Thriller" fetchUrl="/api/movies/thriller" onMovieSelect={onMovieSelect} />
-      <MovieCarouselRow title="Horror" fetchUrl="/api/movies/horror" onMovieSelect={onMovieSelect} />
-      <MovieCarouselRow title="Suspense" fetchUrl="/api/movies/suspense" onMovieSelect={onMovieSelect} />
-      <MovieCarouselRow title="Drama" fetchUrl="/api/movies/drama" onMovieSelect={onMovieSelect} />
+      <MovieCarouselRow title={t('featuredMovies')} fetchUrl="/api/movies/featured" onMovieSelect={onMovieSelect} />
+      <MovieCarouselRow title={t('newReleases')} fetchUrl="/api/movies/new-releases" onMovieSelect={onMovieSelect} />
+      <MovieCarouselRow title={t('action')} fetchUrl="/api/movies/action" onMovieSelect={onMovieSelect} />
+      <MovieCarouselRow title={t('scifi')} fetchUrl="/api/movies/scifi" onMovieSelect={onMovieSelect} />
+      <MovieCarouselRow title={t('comedy')} fetchUrl="/api/movies/comedy" onMovieSelect={onMovieSelect} />
+      <MovieCarouselRow title={t('thriller')} fetchUrl="/api/movies/thriller" onMovieSelect={onMovieSelect} />
+      <MovieCarouselRow title={t('horror')} fetchUrl="/api/movies/horror" onMovieSelect={onMovieSelect} />
+      <MovieCarouselRow title={t('suspense')} fetchUrl="/api/movies/suspense" onMovieSelect={onMovieSelect} />
+      <MovieCarouselRow title={t('drama')} fetchUrl="/api/movies/drama" onMovieSelect={onMovieSelect} />
     </div>
   );
 }
