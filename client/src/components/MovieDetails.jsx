@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { useI18n } from '../contexts/I18nContext'
+import WhereToWatch from './WhereToWatch';
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500'
 
@@ -86,6 +87,12 @@ export default function MovieDetails({ movie, onClose }) {
           </div>
         )}
       </div>
+      <div className="mt-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            Where to Watch
+          </h3>
+          <WhereToWatch movieId={movie.id} />
+        </div>
     </div>
   )
 }

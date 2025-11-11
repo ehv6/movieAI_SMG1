@@ -131,3 +131,5 @@ To render a PNG locally (if you have PlantUML + Java):
 plantuml class-diagram.puml
 ```
 This outputs `class-diagram.png` in the repo.
+
+---

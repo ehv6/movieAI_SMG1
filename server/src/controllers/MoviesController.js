@@ -202,3 +202,18 @@ export async function getMovieDetails(req, res) {
   }
 }
 
+export async function getWatchProviders(req, res) {
+  try {
+    const id = req.params.id;
+    const country = (req.query.country || 'US').toUpperCase();
+
+    const providers = await TmdbService.getWatchProviders(id, country);
+
+    // Helpful cache headers for clients
+    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    res.json({ ok: true, id: Number(id), ...providers });
+  } catch (error) {
+    console.error('Error in getWatchProviders:', error);
+    res.status(error.status || 500).json({ error: error.message || 'Failed to fetch watch providers' });
+  }
+}
