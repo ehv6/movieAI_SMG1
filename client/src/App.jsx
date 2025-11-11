@@ -8,6 +8,8 @@ import MovieDetails from './components/MovieDetails.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
 import SearchHistory from './components/SearchHistory.jsx'
 import LanguageSwitch from './components/LanguageSwitch.jsx'
+import CarouselSection from './components/CarouselSection.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 function AppContent() {
   const [movies, setMovies] = useState([]);
@@ -108,6 +110,11 @@ function AppContent() {
         <MovieList movies={movies} onSelect={setSelected} />
         <MovieDetails movie={selected} onClose={() => setSelected(null)} />
       </main>
+      
+      {/* === ADD NEW COMPONENT BELOW EXISTING CONTENT === */}
+      <ErrorBoundary>
+        <CarouselSection onMovieSelect={setSelected} />
+      </ErrorBoundary>
     </div>
   )
 }

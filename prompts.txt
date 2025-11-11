@@ -1,0 +1,163 @@
+CRITICAL REQUIREMENTS - Additive Full-Stack Movie Carousels (Safety-Focused)
+
+MANDATORY DIRECTIVE
+
+You are an expert Full-Stack Developer proficient in React, Node.js, and Tailwind CSS.
+
+CRITICAL: The previous attempt broke the UI (e.g., "black screen"). Your primary objective is safety and compatibility. You must ONLY ADD the new carousels below the existing content (shown in the image) and MUST NOT modify any existing styles, components, or layout (like the header or search bar).
+
+1. STRATEGY: COMPONENT ISOLATION
+
+CRITICAL: All new UI elements must be built inside new, isolated components.
+
+MANDATORY: You will create ONE new parent component (e.g., <CarouselSection />).
+
+MANDATORY: This <CarouselSection /> will be the ONLY new component added to the existing HomePage.jsx (or similar) file.
+
+MANDATORY: This container can have its own dark background (e.g., bg-gray-900 or bg-black). This style MUST be applied only to this new container, not to the <body> or root App component.
+
+CRITICAL: DO NOT modify any existing CSS files. All styling must be self-contained within the new components using Tailwind utility classes or, if necessary, a new, separate CSS file (e.g., MovieCarousel.css).
+
+2. BACKEND REQUIREMENTS (Node.js)
+
+CRITICAL: Create nine (9) new, non-conflicting API endpoints.
+
+CRITICAL: Create the following GET routes in your Node.js server:
+
+/api/movies/featured
+
+/api/movies/new-releases
+
+/api/movies/action
+
+/api/movies/scifi
+
+/api/movies/comedy
+
+/api/movies/thriller
+
+/api/movies/horror
+
+/api/movies/suspense
+
+/api/movies/drama
+
+MANDATORY: For this task, each endpoint must return a mock JSON array of 15-20 movie objects. Each object must have this exact structure:
+
+{
+  "id": "tt123456",
+  "title": "Movie Title Example",
+  "posterUrl": "[https://placehold.co/300x450/222/FFF?text=Movie+Poster](https://placehold.co/300x450/222/FFF?text=Movie+Poster)"
+}
+
+
+3. FRONTEND REQUIREMENTS (React & Tailwind)
+
+MANDATORY: 1. Create New Component: <MovieCarouselRow />
+
+CRITICAL: Create a new file for this component (e.g., components/MovieCarouselRow.jsx).
+
+MANDATORY: This component must accept title and fetchUrl as props.
+
+MANDATORY: It will use useEffect to fetch data from its fetchUrl prop.
+
+MANDATORY: It will render the row title (<h2>{title}</h2>) and a horizontal list of movie cards.
+
+CRITICAL: This component MUST implement all 4 interaction models specified below.
+
+MANDATORY: 2. Create New Component: <CarouselSection />
+
+CRITICAL: Create a new file for this component (e.g., components/CarouselSection.jsx).
+
+MANDATORY: This component will render the 9 <MovieCarouselRow /> components.
+
+MANDATORY: Apply the dark background (e.g., bg-gray-900) and page padding (e.g., py-8 px-12) here, so it only affects the new content.
+
+MANDATORY: This component will render the 9 rows:
+
+<div className="bg-gray-900 py-8 px-12">
+  <MovieCarouselRow title="Featured Movies" fetchUrl="/api/movies/featured" />
+  <MovieCarouselRow title="New Releases" fetchUrl="/api/movies/new-releases" />
+  <MovieCarouselRow title="Action" fetchUrl="/api/movies/action" />
+  <MovieCarouselRow title="Sci-Fi" fetchUrl="/api/movies/scifi" />
+  <MovieCarouselRow title="Comedy" fetchUrl="/api/movies/comedy" />
+  <MovieCarouselRow title="Thriller" fetchUrl="/api/movies/thriller" />
+  <MovieCarouselRow title="Horror" fetchUrl="/api/movies/horror" />
+  <MovieCarouselRow title="Suspense" fetchUrl="/api/movies/suspense" />
+  <MovieCarouselRow title="Drama" fetchUrl="/api/movies/drama" />
+</div>
+
+
+MANDATORY: 3. Modify Existing File: HomePage.jsx
+
+CRITICAL: In this file, DO NOT DELETE OR MODIFY ANY EXISTING CODE.
+
+MANDATORY: Find the main return (...) block. AFTER the existing search bar <div> and its related components, ADD the new <CarouselSection /> component.
+
+// Example of what HomePage.jsx might look like
+import CarouselSection from './components/CarouselSection';
+// ... other imports
+
+function HomePage() {
+  return (
+    <> {/* or <div> */}
+      {/* ALL YOUR EXISTING CODE (Nav, Search Bar, etc.) GOES HERE. DO NOT TOUCH IT. */}
+      <div className="existing-search-container-etc">
+        {/* ... existing search buttons ... */}
+      </div>
+
+      {/* === ADD NEW COMPONENT BELOW EXISTING CONTENT === */}
+      <CarouselSection />
+
+    </> {/* or </div> */}
+  );
+}
+4. UX & STYLING FOR NEW COMPONENTS
+CRITICAL: Implement these behaviors only inside the new components.
+MANDATORY: Horizontal Scrolling:
+
+Each row's card list must use display: flex; and overflow-x: auto;.
+
+Hide the default browser scrollbar (e.g., using a new CSS file or a Tailwind plugin).
+
+MANDATORY: Clean Styling:
+
+Movie Cards: Use aspect-ratio: 2/3;, rounded-lg, and a transition-transform duration-200 hover:scale-105.
+
+Row Titles: Use text-2xl font-bold text-white mb-4.
+
+Nav Arrows: Style as rounded-full, bg-black/50, text-white, z-index: 20, position: absolute;.
+
+MANDATORY: Drag-to-Scroll:
+
+Implement "click and drag" scrolling on each row using onMouseDown, onMouseMove, onMouseUp, and onMouseLeave events.
+
+MANDATORY: Overlayed Navigation Arrows:
+
+Arrows must be invisible by default and appear only on row-hover (e.g., using group-hover:block).
+
+Clicks must scroll the container smoothly.
+
+MANDATORY: Hover-to-Autoscroll:
+
+Implement the very slow auto-scroll on mouseenter.
+
+Auto-scroll must stop on mouseleave, drag, or arrow click.
+
+5. MANDATORY: Verification Steps
+CRITICAL: Verify the existing application (header, search bar) is 100% UNCHANGED in appearance and function.
+
+CRITICAL: Verify the new carousel section appears below the existing content.
+
+CRITICAL: Verify the carousel section has its own dark background, while the header/search area retains its original styling.
+
+MANDATORY: Verify all 9 Node.js API endpoints are working and return mock JSON.
+
+MANDATORY: Verify all 9 carousels render with their correct titles and movie posters.
+
+MANDATORY: Verify all 4 interaction models work on each row (drag, arrows, hover-scroll, hidden scrollbar).
+
+MANDATORY: Verify the auto-scroll is slow and stops on mouse-leave, drag, or arrow click.
+
+CRITICAL REQUIREMENT
+Safety first. The implementation must be purely additive. Do not break the existing application. All new components must be isolated, data-driven, and render after the current UI, without modifying any existing files other than to add the single <CarouselSection /> component.

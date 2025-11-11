@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { useI18n } from '../contexts/I18nContext'
+import WhereToWatch from './WhereToWatch';
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500'
 
@@ -26,7 +27,8 @@ export default function MovieDetails({ movie, onClose }) {
 
   if (!movie) return null;
   
-  const posterUrl = movie.posterPath ? `${TMDB_IMAGE_BASE}${movie.posterPath}` : ''
+  // Handle both posterPath (from search) and posterUrl (from carousel)
+  const posterUrl = movie.posterUrl || (movie.posterPath ? `${TMDB_IMAGE_BASE}${movie.posterPath}` : '')
   
   return (
     <div
@@ -50,14 +52,14 @@ export default function MovieDetails({ movie, onClose }) {
         />
       )}
       <div className="flex-1">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 id="movie-title" className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <div className="flex-1">
+            <h2 id="movie-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               {movie.title}
             </h2>
             {movie.releaseDate && (
-              <div className="text-sm text-gray-500 dark:text-gray-400" aria-label={`Released: ${movie.releaseDate}`}>
-                {movie.releaseDate}
+              <div className="text-base font-medium text-gray-600 dark:text-gray-300 mb-3" aria-label={`Released: ${movie.releaseDate}`}>
+                <span className="font-semibold">Release Date:</span> {movie.releaseDate}
               </div>
             )}
           </div>
@@ -72,12 +74,25 @@ export default function MovieDetails({ movie, onClose }) {
             </button>
           )}
         </div>
-        {movie.overview && (
-          <p className="mt-3 text-sm leading-6 whitespace-pre-line text-gray-700 dark:text-gray-300">
-            {movie.overview}
-          </p>
+        {movie.overview ? (
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Description</h3>
+            <p className="text-base leading-7 text-gray-700 dark:text-gray-300">
+              {movie.overview}
+            </p>
+          </div>
+        ) : (
+          <div className="mt-4">
+            <p className="text-base text-gray-500 dark:text-gray-400 italic">No description available.</p>
+          </div>
         )}
       </div>
+      <div className="mt-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            Where to Watch
+          </h3>
+          <WhereToWatch movieId={movie.id} />
+        </div>
     </div>
   )
 }
