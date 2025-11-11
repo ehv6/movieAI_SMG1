@@ -3,7 +3,7 @@ import MovieCarouselRow from './MovieCarouselRow.jsx';
 
 export default function CarouselSection({ onMovieSelect }) {
   return (
-    <div className="bg-gray-900 py-8 px-12">
+    <div className="bg-gray-100 dark:bg-gray-900 py-8 px-12">
       <MovieCarouselRow title="Featured Movies" fetchUrl="/api/movies/featured" onMovieSelect={onMovieSelect} />
       <MovieCarouselRow title="New Releases" fetchUrl="/api/movies/new-releases" onMovieSelect={onMovieSelect} />
       <MovieCarouselRow title="Action" fetchUrl="/api/movies/action" onMovieSelect={onMovieSelect} />
