@@ -6,7 +6,9 @@ export async function search(req, res) {
     if (!query) {
       return res.status(400).json({ error: 'Missing query parameter' });
     }
-    const movies = await TmdbService.searchMovies(query);
+    // Extract language from query param, header, or default to 'en'
+    const language = req.query?.lang || req.headers['accept-language']?.split(',')[0]?.split('-')[0] || 'en';
+    const movies = await TmdbService.searchMovies(query, language);
     return res.json({ movies });
   } catch (err) {
     console.error(err);

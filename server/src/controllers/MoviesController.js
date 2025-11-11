@@ -24,10 +24,18 @@ function isCacheValid(category) {
   return age < CACHE_DURATION;
 }
 
+// Helper function to extract language from request
+function getLanguageFromRequest(req) {
+  // Check query param, header, or default to 'en'
+  return req.query?.lang || req.headers['accept-language']?.split(',')[0]?.split('-')[0] || 'en';
+}
+
 // Helper function to get cached data or fetch new
-async function getCachedMovies(category, fetchFunction) {
-  if (isCacheValid(category)) {
-    return cache[category].movies;
+async function getCachedMovies(category, fetchFunction, language) {
+  // Include language in cache key to cache per language
+  const cacheKey = `${category}_${language}`;
+  if (isCacheValid(cacheKey)) {
+    return cache[cacheKey].movies;
   }
 
   try {
@@ -42,7 +50,7 @@ async function getCachedMovies(category, fetchFunction) {
       releaseDate: movie.releaseDate || ''
     }));
 
-    cache[category] = {
+    cache[cacheKey] = {
       movies: transformedMovies,
       timestamp: Date.now()
     };
@@ -51,8 +59,8 @@ async function getCachedMovies(category, fetchFunction) {
   } catch (error) {
     console.error(`Error fetching ${category} movies:`, error);
     // Return cached data if available, even if expired, as fallback
-    if (cache[category] && cache[category].movies) {
-      return cache[category].movies;
+    if (cache[cacheKey] && cache[cacheKey].movies) {
+      return cache[cacheKey].movies;
     }
     throw error;
   }
@@ -60,10 +68,11 @@ async function getCachedMovies(category, fetchFunction) {
 
 export async function getFeatured(req, res) {
   try {
+    const language = getLanguageFromRequest(req);
     const movies = await getCachedMovies('featured', async () => {
       // Get popular movies for featured
-      return await TmdbService.getPopularMovies(1);
-    });
+      return await TmdbService.getPopularMovies(1, language);
+    }, language);
     res.json(movies);
   } catch (error) {
     console.error('Error in getFeatured:', error);
@@ -73,10 +82,11 @@ export async function getFeatured(req, res) {
 
 export async function getNewReleases(req, res) {
   try {
+    const language = getLanguageFromRequest(req);
     const movies = await getCachedMovies('newReleases', async () => {
       // Get now playing movies for new releases
-      return await TmdbService.getNowPlayingMovies(1);
-    });
+      return await TmdbService.getNowPlayingMovies(1, language);
+    }, language);
     res.json(movies);
   } catch (error) {
     console.error('Error in getNewReleases:', error);
@@ -86,11 +96,12 @@ export async function getNewReleases(req, res) {
 
 export async function getAction(req, res) {
   try {
+    const language = getLanguageFromRequest(req);
     const movies = await getCachedMovies('action', async () => {
       return await TmdbService.discoverMovies({
         with_genres: GENRE_IDS.action
-      });
-    });
+      }, language);
+    }, language);
     res.json(movies);
   } catch (error) {
     console.error('Error in getAction:', error);
@@ -100,11 +111,12 @@ export async function getAction(req, res) {
 
 export async function getSciFi(req, res) {
   try {
+    const language = getLanguageFromRequest(req);
     const movies = await getCachedMovies('scifi', async () => {
       return await TmdbService.discoverMovies({
         with_genres: GENRE_IDS.scifi
-      });
-    });
+      }, language);
+    }, language);
     res.json(movies);
   } catch (error) {
     console.error('Error in getSciFi:', error);
@@ -114,11 +126,12 @@ export async function getSciFi(req, res) {
 
 export async function getComedy(req, res) {
   try {
+    const language = getLanguageFromRequest(req);
     const movies = await getCachedMovies('comedy', async () => {
       return await TmdbService.discoverMovies({
         with_genres: GENRE_IDS.comedy
-      });
-    });
+      }, language);
+    }, language);
     res.json(movies);
   } catch (error) {
     console.error('Error in getComedy:', error);
@@ -128,11 +141,12 @@ export async function getComedy(req, res) {
 
 export async function getThriller(req, res) {
   try {
+    const language = getLanguageFromRequest(req);
     const movies = await getCachedMovies('thriller', async () => {
       return await TmdbService.discoverMovies({
         with_genres: GENRE_IDS.thriller
-      });
-    });
+      }, language);
+    }, language);
     res.json(movies);
   } catch (error) {
     console.error('Error in getThriller:', error);
@@ -142,11 +156,12 @@ export async function getThriller(req, res) {
 
 export async function getHorror(req, res) {
   try {
+    const language = getLanguageFromRequest(req);
     const movies = await getCachedMovies('horror', async () => {
       return await TmdbService.discoverMovies({
         with_genres: GENRE_IDS.horror
-      });
-    });
+      }, language);
+    }, language);
     res.json(movies);
   } catch (error) {
     console.error('Error in getHorror:', error);
@@ -156,13 +171,14 @@ export async function getHorror(req, res) {
 
 export async function getSuspense(req, res) {
   try {
+    const language = getLanguageFromRequest(req);
     const movies = await getCachedMovies('suspense', async () => {
       // Suspense uses thriller genre but sorted by release date for variety
       return await TmdbService.discoverMovies({
         with_genres: GENRE_IDS.suspense,
         sort_by: 'release_date.desc'
-      });
-    });
+      }, language);
+    }, language);
     res.json(movies);
   } catch (error) {
     console.error('Error in getSuspense:', error);
@@ -172,11 +188,12 @@ export async function getSuspense(req, res) {
 
 export async function getDrama(req, res) {
   try {
+    const language = getLanguageFromRequest(req);
     const movies = await getCachedMovies('drama', async () => {
       return await TmdbService.discoverMovies({
         with_genres: GENRE_IDS.drama
-      });
-    });
+      }, language);
+    }, language);
     res.json(movies);
   } catch (error) {
     console.error('Error in getDrama:', error);
@@ -187,7 +204,8 @@ export async function getDrama(req, res) {
 export async function getMovieDetails(req, res) {
   try {
     const movieId = req.params.id;
-    const movie = await TmdbService.getMovieDetails(movieId);
+    const language = getLanguageFromRequest(req);
+    const movie = await TmdbService.getMovieDetails(movieId, language);
     res.json({
       id: movie.id,
       title: movie.title,

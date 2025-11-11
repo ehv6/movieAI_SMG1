@@ -20,11 +20,11 @@ class TmdbService {
     return apiKey;
   }
 
-  static async searchMovies(query) {
+  static async searchMovies(query, language = 'en') {
     const apiKey = this.getApiKey();
     try {
       const { data } = await axios.get(`${BASE_URL}/search/movie`, {
-        params: { api_key: apiKey, query }
+        params: { api_key: apiKey, query, language }
       });
       const results = Array.isArray(data?.results) ? data.results : [];
       return results.map(r => new Movie(r));
@@ -41,13 +41,14 @@ class TmdbService {
     }
   }
 
-  static async discoverMovies(params = {}) {
+  static async discoverMovies(params = {}, language = 'en') {
     const apiKey = this.getApiKey();
     try {
       const { data } = await axios.get(`${BASE_URL}/discover/movie`, {
         params: { 
           api_key: apiKey,
           sort_by: 'popularity.desc',
+          language,
           ...params
         }
       });
@@ -65,11 +66,11 @@ class TmdbService {
     }
   }
 
-  static async getPopularMovies(page = 1) {
+  static async getPopularMovies(page = 1, language = 'en') {
     const apiKey = this.getApiKey();
     try {
       const { data } = await axios.get(`${BASE_URL}/movie/popular`, {
-        params: { api_key: apiKey, page }
+        params: { api_key: apiKey, page, language }
       });
       const results = Array.isArray(data?.results) ? data.results : [];
       return results.map(r => new Movie(r));
@@ -85,11 +86,11 @@ class TmdbService {
     }
   }
 
-  static async getNowPlayingMovies(page = 1) {
+  static async getNowPlayingMovies(page = 1, language = 'en') {
     const apiKey = this.getApiKey();
     try {
       const { data } = await axios.get(`${BASE_URL}/movie/now_playing`, {
-        params: { api_key: apiKey, page }
+        params: { api_key: apiKey, page, language }
       });
       const results = Array.isArray(data?.results) ? data.results : [];
       return results.map(r => new Movie(r));
@@ -105,11 +106,11 @@ class TmdbService {
     }
   }
 
-  static async getMovieDetails(movieId) {
+  static async getMovieDetails(movieId, language = 'en') {
     const apiKey = this.getApiKey();
     try {
       const { data } = await axios.get(`${BASE_URL}/movie/${movieId}`, {
-        params: { api_key: apiKey }
+        params: { api_key: apiKey, language }
       });
       return new Movie(data);
     } catch (err) {
