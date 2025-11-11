@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { SearchHistoryProvider, useSearchHistory } from './contexts/SearchHistoryContext'
 import { I18nProvider, useI18n } from './contexts/I18nContext'
+import { FavoritesProvider } from './contexts/FavoritesContext.jsx'
 import SearchBar from './components/SearchBar.jsx'
 import MovieList from './components/MovieList.jsx'
 import MovieDetails from './components/MovieDetails.jsx'
@@ -124,7 +125,9 @@ export default function App() {
     <ThemeProvider>
       <I18nProvider>
         <SearchHistoryProvider>
+          <FavoritesProvider>
           <AppContent />
+          </FavoritesProvider>
         </SearchHistoryProvider>
       </I18nProvider>
     </ThemeProvider>
