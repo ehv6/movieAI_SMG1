@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { useI18n } from '../contexts/I18nContext'
-import WhereToWatch from './WhereToWatch';
+import WhereToWatch from './WhereToWatch'
+import { useFavorites } from '../contexts/FavoritesContext'
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500'
 
@@ -29,6 +30,10 @@ export default function MovieDetails({ movie, onClose }) {
   
   // Handle both posterPath (from search) and posterUrl (from carousel)
   const posterUrl = movie.posterUrl || (movie.posterPath ? `${TMDB_IMAGE_BASE}${movie.posterPath}` : '')
+
+  //heart toggle
+  const { isFav, toggle } = useFavorites();
+  const fav = movie ? isFav(movie.id) : false;
   
   return (
     <div
@@ -57,6 +62,17 @@ export default function MovieDetails({ movie, onClose }) {
             <h2 id="movie-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               {movie.title}
             </h2>
+            <div className="mt-2">
+  <button
+    onClick={() => toggle(movie)}
+    className={`px-3 py-1 rounded-md border transition
+      ${fav ? 'bg-red-600 text-white border-red-700'
+            : 'bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-700'}`}
+    title={fav ? 'Remove from favorites' : 'Add to favorites'}
+  >
+    {fav ? '♥ Favorited' : '♡ Add to Favorites'}
+  </button>
+</div>
             {movie.releaseDate && (
               <div className="text-base font-medium text-gray-600 dark:text-gray-300 mb-3" aria-label={`Released: ${movie.releaseDate}`}>
                 <span className="font-semibold">Release Date:</span> {movie.releaseDate}
@@ -87,12 +103,14 @@ export default function MovieDetails({ movie, onClose }) {
           </div>
         )}
       </div>
+
       <div className="mt-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
             Where to Watch
           </h3>
           <WhereToWatch movieId={movie.id} />
         </div>
+
     </div>
   )
 }
