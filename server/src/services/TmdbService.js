@@ -123,6 +123,44 @@ class TmdbService {
       throw err;
     }
   }
+
+  // Get streaming providers for a movie (per country)
+static async getWatchProviders(movieId, country = 'US') {
+  const apiKey = this.getApiKey();
+  try {
+    const { data } = await axios.get(`${BASE_URL}/movie/${movieId}/watch/providers`, {
+      params: { api_key: apiKey }
+    });
+
+    // TMDB returns data per country code under data.results[country]
+    const node = data?.results?.[country] || {};
+    const normalizeList = (arr = []) =>
+      arr.map(p => ({
+        providerId: p.provider_id,
+        name: p.provider_name,
+        logoPath: p.logo_path,
+        logoUrl: p.logo_path ? `https://image.tmdb.org/t/p/w92${p.logo_path}` : null
+      }));
+
+    return {
+      country,
+      link: node.link || null,             // TMDB deep link
+      flatrate: normalizeList(node.flatrate),  // subscription
+      rent: normalizeList(node.rent),
+      buy: normalizeList(node.buy),
+      ads: normalizeList(node.ads),
+      free: normalizeList(node.free)
+    };
+  } catch (err) {
+    if (err?.response) {
+      const e = new Error(err.response.data?.status_message || 'TMDb request failed');
+      e.status = err.response.status || 500;
+      throw e;
+    }
+    throw err;
+  }
+}
+
 }
 
 export default TmdbService;
