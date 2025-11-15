@@ -107,7 +107,53 @@ function loadCsvIntoDatabase() {
     )
   `);
 
+  // Insert data (use INSERT OR IGNORE to handle duplicate IDs)
+  const insert = db.prepare(`
+    INSERT OR IGNORE INTO movies (
+      adult, belongs_to_collection, budget, genres, homepage, id, imdb_id,
+      original_language, original_title, overview, popularity, poster_path,
+      production_companies, production_countries, release_date, revenue,
+      runtime, spoken_languages, status, tagline, title, video,
+      vote_average, vote_count
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
 
+  const insertMany = db.transaction((rows) => {
+    for (const row of rows) {
+      // Skip rows with invalid or missing IDs
+      const movieId = row.id ? parseInt(row.id) : null;
+      if (!movieId || isNaN(movieId)) {
+        continue;
+      }
+      
+      insert.run(
+        row.adult || null,
+        row.belongs_to_collection || null,
+        row.budget ? parseInt(row.budget) || null : null,
+        row.genres || null,
+        row.homepage || null,
+        movieId,
+        row.imdb_id || null,
+        row.original_language || null,
+        row.original_title || null,
+        row.overview || null,
+        row.popularity ? parseFloat(row.popularity) || null : null,
+        row.poster_path || null,
+        row.production_companies || null,
+        row.production_countries || null,
+        row.release_date || null,
+        row.revenue ? parseInt(row.revenue) || null : null,
+        row.runtime ? parseFloat(row.runtime) || null : null,
+        row.spoken_languages || null,
+        row.status || null,
+        row.tagline || null,
+        row.title || null,
+        row.video || null,
+        row.vote_average ? parseFloat(row.vote_average) || null : null,
+        row.vote_count ? parseInt(row.vote_count) || null : null
+      );
+    }
+  });
 
   insertMany(rows);
   return db;
