@@ -60,6 +60,13 @@ export default function MovieDetails({ movie, onClose }) {
   
   // Handle both posterPath (from search) and posterUrl (from carousel)
   const posterUrl = movie.posterUrl || (movie.posterPath ? `${TMDB_IMAGE_BASE}${movie.posterPath}` : '')
+<<<<<<< HEAD
+=======
+
+  //heart toggle
+  const { isFav, toggle } = useFavorites();
+  const fav = movie ? isFav(movie.id) : false;
+>>>>>>> feature_carolina
   
   return (
     <div
