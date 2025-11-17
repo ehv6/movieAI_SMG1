@@ -6,13 +6,40 @@ import { useFavorites } from '../contexts/FavoritesContext'
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500'
 
 export default function MovieDetails({ movie, onClose }) {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const closeButtonRef = useRef(null)
   const detailsRef = useRef(null)
+  const [movieData, setMovieData] = React.useState(movie)
+
+  // Always fetch movie details with current language when movie or language changes
+  useEffect(() => {
+    if (movie?.id) {
+      async function fetchMovieDetails() {
+        try {
+          // Add timestamp to prevent caching issues
+          const res = await fetch(`/api/movies/details/${movie.id}?lang=${language}&t=${Date.now()}`);
+          if (res.ok) {
+            const fullMovie = await res.json();
+            setMovieData(fullMovie);
+          } else {
+            // Fallback to existing movie data if fetch fails
+            setMovieData(movie);
+          }
+        } catch (error) {
+          console.error('Error fetching movie details:', error);
+          // Fallback to existing movie data on error
+          setMovieData(movie);
+        }
+      }
+      fetchMovieDetails();
+    } else {
+      setMovieData(movie);
+    }
+  }, [movie?.id, language, movie])
 
   // Focus management for accessibility
   useEffect(() => {
-    if (movie && detailsRef.current) {
+    if (movieData && detailsRef.current) {
       // Focus the details container when it opens
       detailsRef.current.focus()
       // Trap focus within modal
@@ -24,9 +51,9 @@ export default function MovieDetails({ movie, onClose }) {
       document.addEventListener('keydown', handleKeyDown)
       return () => document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [movie, onClose])
+  }, [movieData, onClose])
 
-  if (!movie) return null;
+  if (!movie || !movieData) return null;
   
   // Handle both posterPath (from search) and posterUrl (from carousel)
   const posterUrl = movie.posterUrl || (movie.posterPath ? `${TMDB_IMAGE_BASE}${movie.posterPath}` : '')
@@ -47,7 +74,7 @@ export default function MovieDetails({ movie, onClose }) {
       {posterUrl && (
         <img
           src={posterUrl}
-          alt={`${movie.title} poster`}
+          alt={`${movieData.title} poster`}
           className="w-40 h-auto rounded-lg object-cover"
           loading="lazy"
           onError={(e) => {
@@ -60,7 +87,7 @@ export default function MovieDetails({ movie, onClose }) {
         <div className="flex items-start justify-between gap-4 mb-3">
           <div className="flex-1">
             <h2 id="movie-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              {movie.title}
+              {movieData.title}
             </h2>
             <div className="mt-2">
   <button
@@ -90,25 +117,25 @@ export default function MovieDetails({ movie, onClose }) {
             </button>
           )}
         </div>
-        {movie.overview ? (
+        {movieData.overview ? (
           <div className="mt-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Description</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{t('description')}</h3>
             <p className="text-base leading-7 text-gray-700 dark:text-gray-300">
-              {movie.overview}
+              {movieData.overview}
             </p>
           </div>
         ) : (
           <div className="mt-4">
-            <p className="text-base text-gray-500 dark:text-gray-400 italic">No description available.</p>
+            <p className="text-base text-gray-500 dark:text-gray-400 italic">{t('noDescription')}</p>
           </div>
         )}
       </div>
 
       <div className="mt-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            Where to Watch
+            {t('whereToWatch')}
           </h3>
-          <WhereToWatch movieId={movie.id} />
+          <WhereToWatch movieId={movieData.id} />
         </div>
 
     </div>

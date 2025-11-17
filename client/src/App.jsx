@@ -18,13 +18,13 @@ function AppContent() {
   const [error, setError] = useState('');
   const [selected, setSelected] = useState(null);
   const { addToHistory } = useSearchHistory();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   async function handleSearch(query) {
     try {
       setLoading(true);
       setError('');
-      const res = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/search?query=${encodeURIComponent(query)}&lang=${language}`);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Request failed');
@@ -45,7 +45,7 @@ function AppContent() {
     try {
       setLoading(true);
       setError('');
-      const res = await fetch(`/api/ai-search?query=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/ai-search?query=${encodeURIComponent(query)}&lang=${language}`);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Request failed');
