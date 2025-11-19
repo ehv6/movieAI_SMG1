@@ -11,6 +11,7 @@ import SearchHistory from './components/SearchHistory.jsx'
 import LanguageSwitch from './components/LanguageSwitch.jsx'
 import CarouselSection from './components/CarouselSection.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import AiSearchInfo from './components/AiSearchInfo.jsx'
 
 function AppContent() {
   const [movies, setMovies] = useState([]);
@@ -84,6 +85,7 @@ function AppContent() {
       
       <main>
         <SearchBar onSearch={handleSearch} onAiSearch={handleAiSearch} />
+        <AiSearchInfo />
         <SearchHistory onReRun={handleReRun} />
         
         {loading && (

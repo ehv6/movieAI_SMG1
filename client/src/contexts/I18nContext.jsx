@@ -41,6 +41,19 @@ const translations = {
     horror: 'Horror',
     suspense: 'Suspense',
     drama: 'Drama',
+    // AI Search Info
+    aiSearchInfo: {
+      title: 'What can AI Search do?',
+      description: 'AI Search understands natural language queries and finds movies based on complex criteria like genres, release dates, ratings, languages, and more. Just describe what you\'re looking for in plain English!',
+      examplesTitle: 'Example queries:',
+      example1: 'Movies from 2020 with high ratings',
+      example2: 'Action movies released after 2015',
+      example3: 'Comedy films in Spanish language',
+      example4: 'Sci-fi movies with popularity above 50',
+      example5: 'Horror movies from the 1990s',
+      howItWorksTitle: 'How it works:',
+      howItWorks: 'The AI converts your natural language query into a precise database search, allowing you to find movies using flexible, conversational queries instead of exact keywords.'
+    },
     accessibility: {
       searchInput: 'Search input for movies',
       searchButton: 'Search movies',
@@ -89,6 +102,19 @@ const translations = {
     horror: 'Terror',
     suspense: 'Suspenso',
     drama: 'Drama',
+    // AI Search Info
+    aiSearchInfo: {
+      title: '¿Qué puede hacer la Búsqueda IA?',
+      description: 'La Búsqueda IA entiende consultas en lenguaje natural y encuentra películas basándose en criterios complejos como géneros, fechas de lanzamiento, calificaciones, idiomas y más. ¡Solo describe lo que buscas en español natural!',
+      examplesTitle: 'Ejemplos de consultas:',
+      example1: 'Películas de 2020 con altas calificaciones',
+      example2: 'Películas de acción estrenadas después de 2015',
+      example3: 'Películas de comedia en idioma español',
+      example4: 'Películas de ciencia ficción con popularidad superior a 50',
+      example5: 'Películas de terror de los años 1990',
+      howItWorksTitle: 'Cómo funciona:',
+      howItWorks: 'La IA convierte tu consulta en lenguaje natural en una búsqueda precisa en la base de datos, permitiéndote encontrar películas usando consultas flexibles y conversacionales en lugar de palabras clave exactas.'
+    },
     accessibility: {
       searchInput: 'Entrada de búsqueda de películas',
       searchButton: 'Buscar películas',
@@ -137,6 +163,19 @@ const translations = {
     horror: 'Horreur',
     suspense: 'Suspense',
     drama: 'Drame',
+    // AI Search Info
+    aiSearchInfo: {
+      title: 'Que peut faire la Recherche IA?',
+      description: 'La Recherche IA comprend les requêtes en langage naturel et trouve des films basés sur des critères complexes comme les genres, dates de sortie, notes, langues et plus encore. Décrivez simplement ce que vous cherchez en français naturel!',
+      examplesTitle: 'Exemples de requêtes:',
+      example1: 'Films de 2020 avec de bonnes notes',
+      example2: 'Films d\'action sortis après 2015',
+      example3: 'Films de comédie en langue espagnole',
+      example4: 'Films de science-fiction avec une popularité supérieure à 50',
+      example5: 'Films d\'horreur des années 1990',
+      howItWorksTitle: 'Comment ça fonctionne:',
+      howItWorks: 'L\'IA convertit votre requête en langage naturel en une recherche précise dans la base de données, vous permettant de trouver des films en utilisant des requêtes flexibles et conversationnelles au lieu de mots-clés exacts.'
+    },
     accessibility: {
       searchInput: 'Champ de recherche de films',
       searchButton: 'Rechercher des films',
