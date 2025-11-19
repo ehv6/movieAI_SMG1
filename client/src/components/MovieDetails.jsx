@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { useI18n } from '../contexts/I18nContext'
-import WhereToWatch from './WhereToWatch';
+import WhereToWatch from './WhereToWatch'
+import { useFavorites } from '../contexts/FavoritesContext'
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500'
 
@@ -9,6 +10,8 @@ export default function MovieDetails({ movie, onClose }) {
   const closeButtonRef = useRef(null)
   const detailsRef = useRef(null)
   const [movieData, setMovieData] = React.useState(movie)
+  const{isFav , toggle} = useFavorites();
+  const fav = movieData ? isFav(movieData.id) : false
 
   // Always fetch movie details with current language when movie or language changes
   useEffect(() => {
@@ -55,7 +58,7 @@ export default function MovieDetails({ movie, onClose }) {
   if (!movie || !movieData) return null;
   
   // Handle both posterPath (from search) and posterUrl (from carousel)
-  const posterUrl = movieData.posterUrl || (movieData.posterPath ? `${TMDB_IMAGE_BASE}${movieData.posterPath}` : '')
+  const posterUrl = movie.posterUrl || (movie.posterPath ? `${TMDB_IMAGE_BASE}${movie.posterPath}` : '');
   
   return (
     <div
@@ -84,9 +87,23 @@ export default function MovieDetails({ movie, onClose }) {
             <h2 id="movie-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               {movieData.title}
             </h2>
-            {movieData.releaseDate && (
-              <div className="text-base font-medium text-gray-600 dark:text-gray-300 mb-3" aria-label={`Released: ${movieData.releaseDate}`}>
-                <span className="font-semibold">{t('releaseDate')}:</span> {movieData.releaseDate}
+            <div className="mt-2">
+              <button
+                onClick={() => toggle(movieData)}
+                className={`px-3 py-1 rounded-md border transition
+                  ${
+                    fav
+                      ? 'bg-red-600 text-white border-red-700'
+                      : 'bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-700'
+                  }`}
+                title={fav ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                {fav ? '♥ Favorited' : '♡ Add to Favorites'}
+              </button>
+            </div>
+            {movie.releaseDate && (
+              <div className="text-base font-medium text-gray-600 dark:text-gray-300 mb-3" aria-label={`Released: ${movie.releaseDate}`}>
+                <span className="font-semibold">Release Date:</span> {movie.releaseDate}
               </div>
             )}
           </div>
@@ -114,12 +131,14 @@ export default function MovieDetails({ movie, onClose }) {
           </div>
         )}
       </div>
+
       <div className="mt-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
             {t('whereToWatch')}
           </h3>
           <WhereToWatch movieId={movieData.id} />
         </div>
+
     </div>
   )
 }
