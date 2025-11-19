@@ -10,8 +10,7 @@ export default function MovieDetails({ movie, onClose }) {
   const closeButtonRef = useRef(null)
   const detailsRef = useRef(null)
   const [movieData, setMovieData] = React.useState(movie)
-
-  const { isFav, toggle } = useFavorites();
+  const{isFav , toggle} = useFavorites();
   const fav = movieData ? isFav(movieData.id) : false
 
   // Always fetch movie details with current language when movie or language changes
@@ -59,7 +58,7 @@ export default function MovieDetails({ movie, onClose }) {
   if (!movie || !movieData) return null;
   
   // Handle both posterPath (from search) and posterUrl (from carousel)
-  const posterUrl = movie.posterUrl || (movie.posterPath ? `${TMDB_IMAGE_BASE}${movie.posterPath}` : '')
+  const posterUrl = movie.posterUrl || (movie.posterPath ? `${TMDB_IMAGE_BASE}${movie.posterPath}` : '');
   
   return (
     <div
