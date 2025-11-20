@@ -1,6 +1,7 @@
 import React, { useContext, useState } from "react";
 import { FavoritesContext } from "../contexts/FavoritesContext";
 import MovieDetails from "./MovieDetails";
+import MovieRecommendations from "./MovieRecommendations";
 
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 
@@ -60,6 +61,9 @@ export default function Favorites() {
           );
         })}
       </div>
+      
+      <MovieRecommendations onSelect={setSelected} />
+      
       {selected && (
         <MovieDetails
         movie={selected}

@@ -3,16 +3,14 @@ import { createContext, useState, useEffect } from "react";
 export const FavoritesContext = createContext();
 
 export function FavoritesProvider({ children }) {
-  const [favorites, setFavorites] = useState([]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("favorites");
-    if (saved) setFavorites(JSON.parse(saved));
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("favorites", JSON.stringify(favorites));
-  }, [favorites]);
+  const [favorites, setFavorites] = useState(() => {
+    try{
+      const saved = localStorage.getItem("favorites");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    } 
+    });
 
   const addFavorite = (movie) => {
     if (!favorites.some((f) => f.id === movie.id)) {
@@ -25,6 +23,15 @@ export function FavoritesProvider({ children }) {
   };
 
   const isFavorite = (id) => favorites.some((f) => f.id === id);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("favorites", JSON.stringify(favorites));
+    } catch (err) {
+      console.error("Failed to save favorites", err);
+    }
+  }, [favorites]);
+
 
   return (
     <FavoritesContext.Provider
