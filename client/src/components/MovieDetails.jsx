@@ -1,7 +1,8 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useContext, useEffect, useRef } from 'react'
+
 import { useI18n } from '../contexts/I18nContext'
 import WhereToWatch from './WhereToWatch'
-import { useFavorites } from '../contexts/FavoritesContext'
+import { FavoritesContext } from '../contexts/FavoritesContext'
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500'
 
@@ -9,9 +10,14 @@ export default function MovieDetails({ movie, onClose }) {
   const { t, language } = useI18n()
   const closeButtonRef = useRef(null)
   const detailsRef = useRef(null)
+
   const [movieData, setMovieData] = React.useState(movie)
-  const{isFav , toggle} = useFavorites();
-  const fav = movieData ? isFav(movieData.id) : false
+  
+  const { addFavorite, removeFavorite, isFavorite } = 
+    useContext(FavoritesContext);
+
+  const isFav = movieData && isFavorite(movieData.id);
+
 
   // Always fetch movie details with current language when movie or language changes
   useEffect(() => {
@@ -87,19 +93,23 @@ export default function MovieDetails({ movie, onClose }) {
             <h2 id="movie-title" className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               {movieData.title}
             </h2>
+
             <div className="mt-2">
               <button
-                onClick={() => toggle(movieData)}
+                onClick={() => 
+                  isFav ? removeFavorite(movieData.id) : addFavorite(movieData)
+                }
                 className={`px-3 py-1 rounded-md border transition
                   ${
-                    fav
+                    isFav
                       ? 'bg-red-600 text-white border-red-700'
                       : 'bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-700'
                   }`}
-                title={fav ? 'Remove from favorites' : 'Add to favorites'}
               >
-                {fav ? '♥ Favorited' : '♡ Add to Favorites'}
+                {isFav ? '♥ Favorited' : '♡ Add to Favorites'}
               </button>
+
+
             </div>
             {movie.releaseDate && (
               <div className="text-base font-medium text-gray-600 dark:text-gray-300 mb-3" aria-label={`Released: ${movie.releaseDate}`}>
@@ -140,7 +150,7 @@ export default function MovieDetails({ movie, onClose }) {
         </div>
 
     </div>
-  )
+  );
 }
 
 
