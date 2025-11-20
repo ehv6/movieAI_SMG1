@@ -63,13 +63,32 @@ export default function Favorites() {
       </div>
       
       <MovieRecommendations onSelect={setSelected} />
-      
+
       {selected && (
         <MovieDetails
         movie={selected}
         onClose={() => setSelected(null)}
         />
       )}
+
+        <button
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        style={{
+            position: "fixed",
+            bottom: "20px",
+            right: "20px",
+            padding: "12px 18px",
+            background: "#1e3a8a",
+            color: "white",
+            border: "none",
+            borderRadius: "50px",
+            cursor: "pointer",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+            zIndex: 9999,
+        }}
+        >
+        ↑ Top
+        </button>
     </div>
   );
 }
