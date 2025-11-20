@@ -3,6 +3,8 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { SearchHistoryProvider, useSearchHistory } from './contexts/SearchHistoryContext'
 import { I18nProvider, useI18n } from './contexts/I18nContext'
 import { FavoritesProvider } from './contexts/FavoritesContext.jsx'
+import Favorites from './components/Favorites.jsx'
+import NavBar from './components/NavBar.jsx'
 import SearchBar from './components/SearchBar.jsx'
 import MovieList from './components/MovieList.jsx'
 import MovieDetails from './components/MovieDetails.jsx'
@@ -123,15 +125,23 @@ function AppContent() {
 }
 
 export default function App() {
+
+  const [view, setView] = useState("home");
+
   return (
     <ThemeProvider>
       <I18nProvider>
         <SearchHistoryProvider>
           <FavoritesProvider>
-          <AppContent />
+            <NavBar currentView={view} onChangeView={setView} />
+            <div className="max-w-4xl mx-auto p-6 min-h-screen"> {view === "home" ? (
+            <AppContent />
+            ) : (
+            <Favorites /> )}
+            </div>   
           </FavoritesProvider>
         </SearchHistoryProvider>
       </I18nProvider>
     </ThemeProvider>
-  )
+  );
 }
