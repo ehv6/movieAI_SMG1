@@ -80,20 +80,6 @@ export default function MovieRecommendations({ onSelect }) {
         else {
             parts.push('it is popular with other viewers');
         }}
-
-    if ((movie.popularity || 0) > 50) {
-        if (lang.startsWith('es')) {
-            parts.push('es popular entre otros usuarios');}
-        else if (lang.startsWith('fr')) {
-            parts.push('il est populaire auprès des autres spectateurs');}
-        else {
-            parts.push('it is popular with other viewers');
-        }}
-    
-      if (parts.length === 0) {
-        return t("recommendations.reasonGeneric");
-      }
-    
       
     if (parts.length === 0) {
         if (lang.startsWith('es')) return 'Basado en tus películas favoritas.';
