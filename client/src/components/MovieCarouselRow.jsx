@@ -2,11 +2,14 @@ import React, { useRef, useState, useEffect } from 'react';
 import './MovieCarousel.css';
 import { useI18n } from '../contexts/I18nContext';
 
-function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
+function MovieCarouselRow({ title, fetchUrl, movies: providedMovies, onMovieSelect }) {
   const { t, language } = useI18n();
   const carouselRef = useRef(null);
-  const [movies, setMovies] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  //if movies are passed in, use them
+  //otherwise, starts with an empty array
+  const [movies, setMovies] = useState(providedMovies || []);
+  const [loading, setLoading] = useState(!providedMovies);
   
   // Drag-to-scroll state
   const [isDown, setIsDown] = useState(false);

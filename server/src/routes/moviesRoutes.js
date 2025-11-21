@@ -12,6 +12,7 @@ router.get('/thriller', MoviesController.getThriller);
 router.get('/horror', MoviesController.getHorror);
 router.get('/suspense', MoviesController.getSuspense);
 router.get('/drama', MoviesController.getDrama);
+router.get('/popular', MoviesController.getPopular);
 router.get('/details/:id', MoviesController.getMovieDetails);
 router.get('/:id/providers', MoviesController.getWatchProviders);
 

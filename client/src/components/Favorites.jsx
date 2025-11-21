@@ -2,20 +2,37 @@ import React, { useContext, useState } from "react";
 import { FavoritesContext } from "../contexts/FavoritesContext";
 import MovieDetails from "./MovieDetails";
 import MovieRecommendations from "./MovieRecommendations";
+import { useI18n } from "../contexts/I18nContext";
 
 const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 
 export default function Favorites() {
   const { favorites } = useContext(FavoritesContext);
   const [selected, setSelected] = useState(null); 
+  const{language} = useI18n();
+  const lang = (language || 'en').toLowerCase();
+  const emptyMessage = 
+    lang.startsWith('es') ? 'Toadivia no has guradado favoritos..':
+    lang.startsWith('fr') ? 'Aucun favori enregistre pour lé moment. ':
+    'No favorites saved yet.';
+   const favoritesTitle =
+    lang.startsWith('es') ? 'Tus favoritos':
+    lang.startsWith('fr') ? 'Vos favoris' :
+    'Your Favorites';
+   const backToTopLabel = 
+   lang.startsWith('es') ? 'Arriba':
+   lang.startsWith('fr') ? 'Haut ':
+   'Top';
+
+
 
   if (!favorites || favorites.length === 0) {
-    return <h2 style={{ padding: "20px" }}>No favorites saved yet.</h2>;
+    return <h2 style={{ padding: "20px" }}>{emptyMessage}</h2>;
   }
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Your Favorites</h1>
+      <h1>{favoritesTitle}</h1>
 
       <div
         style={{
@@ -87,7 +104,7 @@ export default function Favorites() {
             zIndex: 9999,
         }}
         >
-        ↑ Top
+        ↑ {backToTopLabel}
         </button>
     </div>
   );
