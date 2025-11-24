@@ -10,6 +10,7 @@ import SearchHistory from './components/SearchHistory.jsx'
 import LanguageSwitch from './components/LanguageSwitch.jsx'
 import CarouselSection from './components/CarouselSection.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import logo from './assets/logo/New Project white.svg'
 
 function AppContent() {
   const [movies, setMovies] = useState([]);
@@ -72,9 +73,11 @@ function AppContent() {
   return (
     <div className="max-w-4xl mx-auto p-6 min-h-screen">
       <header className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          {t('appTitle')}
-        </h1>
+        <img 
+          src={logo} 
+          alt={t('appTitle')} 
+          className="h-[168px] w-auto select-none"
+        />
         <div className="flex items-center gap-3">
           <LanguageSwitch />
           <ThemeToggle />
