@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ThemeProvider } from './contexts/ThemeContext'
+import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 import { SearchHistoryProvider, useSearchHistory } from './contexts/SearchHistoryContext'
 import { I18nProvider, useI18n } from './contexts/I18nContext'
 import SearchBar from './components/SearchBar.jsx'
@@ -10,7 +10,8 @@ import SearchHistory from './components/SearchHistory.jsx'
 import LanguageSwitch from './components/LanguageSwitch.jsx'
 import CarouselSection from './components/CarouselSection.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
-import logo from './assets/logo/New Project white.svg'
+import logoWhite from './assets/logo/New Project white.svg'
+import logoBlack from './assets/logo/New Project.svg'
 
 function AppContent() {
   const [movies, setMovies] = useState([]);
@@ -19,6 +20,7 @@ function AppContent() {
   const [selected, setSelected] = useState(null);
   const { addToHistory } = useSearchHistory();
   const { t } = useI18n();
+  const { theme } = useTheme();
 
   async function handleSearch(query) {
     try {
@@ -74,7 +76,7 @@ function AppContent() {
     <div className="max-w-4xl mx-auto p-6 min-h-screen">
       <header className="flex items-center justify-between mb-6">
         <img 
-          src={logo} 
+          src={theme === 'dark' ? logoWhite : logoBlack} 
           alt={t('appTitle')} 
           className="h-[168px] w-auto select-none"
         />
