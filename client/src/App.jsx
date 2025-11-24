@@ -1,7 +1,10 @@
 import React, { useState } from 'react'
-import { ThemeProvider, useTheme } from './contexts/ThemeContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import { SearchHistoryProvider, useSearchHistory } from './contexts/SearchHistoryContext'
 import { I18nProvider, useI18n } from './contexts/I18nContext'
+import { FavoritesProvider } from './contexts/FavoritesContext.jsx'
+import Favorites from './components/Favorites.jsx'
+import NavBar from './components/NavBar.jsx'
 import SearchBar from './components/SearchBar.jsx'
 import MovieList from './components/MovieList.jsx'
 import MovieDetails from './components/MovieDetails.jsx'
@@ -10,8 +13,8 @@ import SearchHistory from './components/SearchHistory.jsx'
 import LanguageSwitch from './components/LanguageSwitch.jsx'
 import CarouselSection from './components/CarouselSection.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
-import logoWhite from './assets/logo/New Project white.svg'
-import logoBlack from './assets/logo/New Project.svg'
+import AiSearchInfo from './components/AiSearchInfo.jsx'
+import logo from './assets/logo/New Project white.svg'
 
 function AppContent() {
   const [movies, setMovies] = useState([]);
@@ -19,14 +22,13 @@ function AppContent() {
   const [error, setError] = useState('');
   const [selected, setSelected] = useState(null);
   const { addToHistory } = useSearchHistory();
-  const { t } = useI18n();
-  const { theme } = useTheme();
+  const { t, language } = useI18n();
 
   async function handleSearch(query) {
     try {
       setLoading(true);
       setError('');
-      const res = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/search?query=${encodeURIComponent(query)}&lang=${language}`);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Request failed');
@@ -47,7 +49,7 @@ function AppContent() {
     try {
       setLoading(true);
       setError('');
-      const res = await fetch(`/api/ai-search?query=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/ai-search?query=${encodeURIComponent(query)}&lang=${language}`);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Request failed');
@@ -76,7 +78,7 @@ function AppContent() {
     <div className="max-w-4xl mx-auto p-6 min-h-screen">
       <header className="flex items-center justify-between mb-6">
         <img 
-          src={theme === 'dark' ? logoWhite : logoBlack} 
+          src={logo} 
           alt={t('appTitle')} 
           className="h-[168px] w-auto select-none"
         />
@@ -88,6 +90,7 @@ function AppContent() {
       
       <main>
         <SearchBar onSearch={handleSearch} onAiSearch={handleAiSearch} />
+        <AiSearchInfo />
         <SearchHistory onReRun={handleReRun} />
         
         {loading && (
@@ -125,13 +128,23 @@ function AppContent() {
 }
 
 export default function App() {
+
+  const [view, setView] = useState("home");
+
   return (
     <ThemeProvider>
       <I18nProvider>
         <SearchHistoryProvider>
-          <AppContent />
+          <FavoritesProvider>
+            <NavBar currentView={view} onChangeView={setView} />
+            <div className="max-w-4xl mx-auto p-6 min-h-screen"> {view === "home" ? (
+            <AppContent />
+            ) : (
+            <Favorites /> )}
+            </div>   
+          </FavoritesProvider>
         </SearchHistoryProvider>
       </I18nProvider>
     </ThemeProvider>
-  )
+  );
 }

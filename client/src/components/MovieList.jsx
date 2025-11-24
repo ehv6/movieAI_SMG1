@@ -2,9 +2,29 @@ import React from 'react'
 import { useI18n } from '../contexts/I18nContext'
 
 export default function MovieList({ movies = [], onSelect }) {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   
   if (!movies.length) return null;
+  
+  const handleMovieClick = async (movie) => {
+    if (!onSelect) return;
+    
+    // Always fetch full movie details with current language to ensure description is in correct language
+    try {
+      const res = await fetch(`/api/movies/details/${movie.id}?lang=${language}`);
+      if (res.ok) {
+        const fullMovie = await res.json();
+        onSelect(fullMovie);
+      } else {
+        // Fallback to movie data from list if details fetch fails
+        onSelect(movie);
+      }
+    } catch (error) {
+      console.error('Error fetching movie details:', error);
+      // Fallback to movie data from list on error
+      onSelect(movie);
+    }
+  };
   
   return (
     <div 
@@ -16,7 +36,7 @@ export default function MovieList({ movies = [], onSelect }) {
         <button
           key={m.id}
           className="bg-white dark:bg-gray-800 rounded-xl shadow dark:shadow-gray-700 p-3 text-left hover:shadow-md dark:hover:shadow-gray-600 transition-shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-          onClick={() => onSelect && onSelect(m)}
+          onClick={() => handleMovieClick(m)}
           aria-label={t('accessibility.movieCard', { title: m.title })}
           role="listitem"
           tabIndex={0}
