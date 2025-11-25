@@ -3,56 +3,192 @@ skinparam style strictuml
 skinparam classAttributeIconSize 0
 
 package "Server (Node/Express)" {
-  class SearchController {
-    +search(req, res): Promise<void>
+  package "Models" {
+    class Movie {
+      -id: number
+      -title: string
+      -overview: string
+      -posterPath: string
+      -posterUrl: string
+      -releaseDate: string
+      +constructor(data)
+    }
   }
 
-  class TmdbService {
-    +searchMovies(query: string): Promise<List<Movie>>
+  package "Controllers" {
+    class SearchController {
+      +search(req, res): Promise<void>
+    }
+    
+    class AiSearchController {
+      +aiSearch(req, res): Promise<void>
+    }
+    
+    class MoviesController {
+      +getFeatured(req, res): Promise<void>
+      +getNewReleases(req, res): Promise<void>
+      +getAction(req, res): Promise<void>
+      +getSciFi(req, res): Promise<void>
+      +getComedy(req, res): Promise<void>
+      +getThriller(req, res): Promise<void>
+      +getHorror(req, res): Promise<void>
+      +getSuspense(req, res): Promise<void>
+      +getDrama(req, res): Promise<void>
+      +getMovieDetails(req, res): Promise<void>
+      +getWatchProviders(req, res): Promise<void>
+    }
+    
+    class RecommendationController {
+      +getRecommendations(req, res): Promise<void>
+      +getAiRecommendations(req, res): Promise<void>
+    }
   }
 
-  class AiQueryService {
-    +search(query: string): Promise<List<Movie>>  <<stub>>
+  package "Services" {
+    class TmdbService {
+      +searchMovies(query, language): Promise<List<Movie>>
+      +discoverMovies(params, language): Promise<List<Movie>>
+      +getPopularMovies(page, language): Promise<List<Movie>>
+      +getNowPlayingMovies(page, language): Promise<List<Movie>>
+      +getMovieDetails(movieId, language): Promise<Movie>
+      +getWatchProviders(movieId, country): Promise<Object>
+    }
+
+    class AiQueryService {
+      +search(query): Promise<List<Movie>>
+    }
+    
+    class CsvMovieRepository {
+      +getAllMovies(): Array<Movie>
+      +clearCache(): void
+    }
+    
+    class RecommendationService {
+      +getRecommendations(favoriteIds): Promise<List<Movie>>
+      +getAiRecommendations(favoriteIds): Promise<List<Movie>>
+    }
   }
 
-  class Movie {
-    -id: number
-    -title: string
-    -overview: string
-    -posterPath: string
-    -releaseDate: string
-    +constructor(data)
+  package "Routes" {
+    class searchRoutes {
+      +router: Router
+    }
+    
+    class moviesRoutes {
+      +router: Router
+    }
   }
 
-  class searchRoutes {
-    +router: Router
+  class server {
+    +app: Express
+    +listen(port): void
   }
 
   SearchController --> TmdbService : uses
-  SearchController --> AiQueryService : (future) uses
+  AiSearchController --> AiQueryService : uses
+  MoviesController --> TmdbService : uses
+  RecommendationController --> RecommendationService : uses
+  RecommendationService --> CsvMovieRepository : uses
+  RecommendationService --> AiQueryService : uses
+  AiQueryService --> CsvMovieRepository : uses
   TmdbService --> Movie : returns
+  AiQueryService --> Movie : returns
+  RecommendationService --> Movie : returns
   searchRoutes --> SearchController : calls
+  searchRoutes --> AiSearchController : calls
+  moviesRoutes --> MoviesController : calls
+  moviesRoutes --> RecommendationController : calls
+  server --> searchRoutes : mounts
+  server --> moviesRoutes : mounts
 }
 
 package "Client (React)" {
-  class App {
-    -query: string
-    -movies: Movie[]
-    +handleSearch(q): void
-    +handleAiSearch(q): void
+  package "Components" {
+    class App {
+      -view: string
+      -movies: Movie[]
+      -loading: boolean
+      -error: string
+      -selected: Movie
+      +handleSearch(query): void
+      +handleAiSearch(query): void
+      +handleReRun(query, type): void
+    }
+
+    class SearchBar {
+      -query: string
+      +onSearch(query): void
+      +onAiSearch(query): void
+    }
+
+    class MovieList {
+      -selectedMovie: Movie
+      -selectedIndex: number
+      +movies: Movie[]
+      +onSelect(movie): void
+    }
+    
+    class MovieDetails {
+      +movie: Movie
+      +onClose(): void
+    }
+    
+    class CarouselSection {
+      +onMovieSelect(movie): void
+    }
+    
+    class Favorites {
+      +favorites: Movie[]
+    }
+    
+    class NavBar {
+      +currentView: string
+      +onChangeView(view): void
+    }
+    
+    class SearchHistory {
+      +onReRun(query, type): void
+    }
   }
 
-  class SearchBar {
-    +onSearch(q): void
-    +onAiSearch(q): void
+  package "Contexts" {
+    class ThemeContext {
+      +theme: string
+      +toggleTheme(): void
+    }
+    
+    class I18nContext {
+      +language: string
+      +t(key): string
+      +setLanguage(lang): void
+    }
+    
+    class SearchHistoryContext {
+      +history: Array
+      +addToHistory(query, type): void
+    }
+    
+    class FavoritesContext {
+      +favorites: Movie[]
+      +addFavorite(movie): void
+      +removeFavorite(id): void
+      +isFavorite(id): boolean
+    }
   }
 
-  class MovieList {
-    +movies: Movie[]
-  }
-
-  App --> SearchBar
-  App --> MovieList
+  App --> SearchBar : contains
+  App --> MovieList : contains
+  App --> CarouselSection : contains
+  App --> NavBar : contains
+  App --> Favorites : contains
+  App --> SearchHistory : contains
+  MovieList --> MovieDetails : contains
+  App --> ThemeContext : uses
+  App --> I18nContext : uses
+  App --> SearchHistoryContext : uses
+  App --> FavoritesContext : uses
+  SearchBar --> I18nContext : uses
+  MovieList --> I18nContext : uses
 }
 
 @enduml
