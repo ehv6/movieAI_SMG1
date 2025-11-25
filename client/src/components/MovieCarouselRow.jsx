@@ -3,7 +3,7 @@ import './MovieCarousel.css';
 import { useI18n } from '../contexts/I18nContext';
 import MovieDetails from './MovieDetails';
 
-function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
+function MovieCarouselRow({ title, fetchUrl, movies: providedMovies, onMovieSelect }) {
   const { t, language } = useI18n();
   const carouselRef = useRef(null);
   const detailsRef = useRef(null);

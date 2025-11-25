@@ -8,6 +8,15 @@ const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500'
 
 export default function MovieDetails({ movie, onClose }) {
   const { t, language } = useI18n()
+  const lang = (language || 'en').toLowerCase();
+  const addedLabel =
+    lang.startsWith('es') ? 'Agregar a favoritos' :
+    lang.startsWith('fr') ? 'Ajouter aux favoris' :
+    'Add to Favorites';
+  const favoritedLabel =
+    lang.startsWith('es') ? 'En favoritos' :
+    lang.startsWith('fr') ? 'Dans les favoris' :
+    'Favorited';
   const closeButtonRef = useRef(null)
   const detailsRef = useRef(null)
 

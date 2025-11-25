@@ -24,6 +24,19 @@ export function FavoritesProvider({ children }) {
 
   const isFavorite = (id) => favorites.some((f) => f.id === id);
 
+  const clearFavorites = () => {
+    setFavorites([]);
+
+    
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.removeItem('favorites');
+      } catch {
+      
+      }
+    }
+  };
+
   useEffect(() => {
     try {
       localStorage.setItem("favorites", JSON.stringify(favorites));
@@ -35,7 +48,7 @@ export function FavoritesProvider({ children }) {
 
   return (
     <FavoritesContext.Provider
-      value={{ favorites, addFavorite, removeFavorite, isFavorite }}
+      value={{ favorites, addFavorite, removeFavorite, isFavorite, clearFavorites }}
     >
       {children}
     </FavoritesContext.Provider>

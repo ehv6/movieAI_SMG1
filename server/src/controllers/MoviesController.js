@@ -235,3 +235,24 @@ export async function getWatchProviders(req, res) {
     res.status(error.status || 500).json({ error: error.message || 'Failed to fetch watch providers' });
   }
 }
+
+export async function getPopular(req, res) {
+  try {
+    const language = getLanguageFromRequest(req);
+
+    // Reuse the same cache helper and TMDb service as getFeatured
+    const movies = await getCachedMovies(
+      'popular',
+      async () => {
+        return await TmdbService.getPopularMovies(1, language);
+      },
+      language
+    );
+
+    // For consistency with other endpoints, return the array directly
+    res.json(movies);
+  } catch (error) {
+    console.error('Error in getPopular:', error);
+    res.status(500).json({ error: 'Failed to fetch popular movies' });
+  }
+}
