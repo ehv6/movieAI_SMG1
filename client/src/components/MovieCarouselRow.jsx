@@ -1,12 +1,15 @@
 import React, { useRef, useState, useEffect } from 'react';
 import './MovieCarousel.css';
 import { useI18n } from '../contexts/I18nContext';
+import MovieDetails from './MovieDetails';
 
 function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
   const { t, language } = useI18n();
   const carouselRef = useRef(null);
+  const detailsRef = useRef(null);
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMovie, setSelectedMovie] = useState(null);
   
   // Drag-to-scroll state
   const [isDown, setIsDown] = useState(false);
@@ -152,6 +155,20 @@ function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
   useEffect(() => {
     updateArrowVisibility();
   }, [movies]);
+  
+  // Scroll to selected movie details when selection changes
+  useEffect(() => {
+    if (selectedMovie && detailsRef.current) {
+      // Small delay to ensure DOM is updated and animation starts
+      setTimeout(() => {
+        detailsRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+          inline: 'nearest'
+        })
+      }, 150)
+    }
+  }, [selectedMovie])
 
   if (loading) {
     return (
@@ -174,8 +191,8 @@ function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
     >
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">{title}</h2>
       <div className="relative group">
-        {/* Previous Arrow */}
-        {showPrevArrow && (
+        {/* Previous Arrow - only show when no movie is selected */}
+        {showPrevArrow && !selectedMovie && (
           <button
             className="nav-arrow nav-arrow-left"
             onClick={() => scroll('prev')}
@@ -189,18 +206,20 @@ function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
           </button>
         )}
         
-        {/* Next Arrow */}
-        <button
-          className="nav-arrow nav-arrow-right"
-          onClick={() => scroll('next')}
-          onMouseEnter={() => {
-            stopAutoScroll();
-            setIsHovering(false);
-          }}
-          aria-label={`Scroll ${title} right`}
-        >
-          ›
-        </button>
+        {/* Next Arrow - only show when no movie is selected */}
+        {!selectedMovie && (
+          <button
+            className="nav-arrow nav-arrow-right"
+            onClick={() => scroll('next')}
+            onMouseEnter={() => {
+              stopAutoScroll();
+              setIsHovering(false);
+            }}
+            aria-label={`Scroll ${title} right`}
+          >
+            ›
+          </button>
+        )}
 
         {/* Movie List Container */}
         <div
@@ -217,27 +236,39 @@ function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
           {movies.map((movie) => (
             <div
               key={movie.id}
-              className="movie-card"
+              className={`movie-card ${selectedMovie?.id === movie.id ? 'ring-2 ring-blue-500' : ''}`}
               role="listitem"
               aria-label={movie.title}
+              style={{
+                transition: 'transform 0.2s ease, ring 0.2s ease'
+              }}
               onClick={async (e) => {
                 e.stopPropagation();
-                if (onMovieSelect) {
-                  // Always fetch full movie details to ensure we have complete data
-                  try {
-                    const res = await fetch(`/api/movies/details/${movie.id}?lang=${language}`);
-                    if (res.ok) {
-                      const fullMovie = await res.json();
-                      onMovieSelect(fullMovie);
-                    } else {
-                      // Fallback to carousel movie data if details fetch fails
-                      onMovieSelect(movie);
-                    }
-                  } catch (error) {
-                    console.error('Error fetching movie details:', error);
-                    // Fallback to carousel movie data on error
-                    onMovieSelect(movie);
+                
+                // Toggle selection - if clicking the same movie, close it
+                if (selectedMovie?.id === movie.id) {
+                  setSelectedMovie(null);
+                  if (onMovieSelect) onMovieSelect(null);
+                  return;
+                }
+                
+                // Always fetch full movie details to ensure we have complete data
+                try {
+                  const res = await fetch(`/api/movies/details/${movie.id}?lang=${language}`);
+                  if (res.ok) {
+                    const fullMovie = await res.json();
+                    setSelectedMovie(fullMovie);
+                    if (onMovieSelect) onMovieSelect(fullMovie);
+                  } else {
+                    // Fallback to carousel movie data if details fetch fails
+                    setSelectedMovie(movie);
+                    if (onMovieSelect) onMovieSelect(movie);
                   }
+                } catch (error) {
+                  console.error('Error fetching movie details:', error);
+                  // Fallback to carousel movie data on error
+                  setSelectedMovie(movie);
+                  if (onMovieSelect) onMovieSelect(movie);
                 }
               }}
               onMouseDown={(e) => {
@@ -257,7 +288,46 @@ function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
             </div>
           ))}
         </div>
+        
+        {/* MovieDetails inline below carousel */}
+        {selectedMovie && (
+          <div 
+            ref={detailsRef}
+            className="mt-4 movie-details-expand"
+            style={{
+              animation: 'slideDown 0.4s ease-out'
+            }}
+          >
+            <MovieDetails 
+              movie={selectedMovie} 
+              onClose={() => {
+                setSelectedMovie(null);
+                if (onMovieSelect) onMovieSelect(null);
+              }} 
+            />
+          </div>
+        )}
       </div>
+      
+      {/* Add CSS animation */}
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+            max-height: 0;
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+            max-height: 2000px;
+          }
+        }
+        
+        .movie-details-expand {
+          overflow: hidden;
+        }
+      `}</style>
     </div>
   );
 }

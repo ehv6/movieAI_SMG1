@@ -36,10 +36,14 @@ function AppContent() {
         throw new Error(err.error || 'Request failed');
       }
       const data = await res.json();
-      setMovies(data.movies ?? []);
+      console.log('Search response:', data);
+      const moviesArray = Array.isArray(data.movies) ? data.movies : [];
+      console.log('Movies array:', moviesArray);
+      setMovies(moviesArray);
       setSelected(null);
       addToHistory(query, 'search');
     } catch (e) {
+      console.error('Search error:', e);
       setError(e.message);
       setMovies([]);
     } finally {
@@ -117,8 +121,9 @@ function AppContent() {
           </p>
         )}
         
-        <MovieList movies={movies} onSelect={setSelected} />
-        <MovieDetails movie={selected} onClose={() => setSelected(null)} />
+        <ErrorBoundary>
+          <MovieList movies={movies} onSelect={setSelected} />
+        </ErrorBoundary>
       </main>
       
       {/* === ADD NEW COMPONENT BELOW EXISTING CONTENT === */}

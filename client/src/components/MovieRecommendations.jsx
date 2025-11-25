@@ -86,29 +86,41 @@ export default function MovieRecommendations({ onSelect }) {
             key={movie.id}
             type="button"
             onClick={() => onSelect(movie)}
-            className="w-full text-left bg-white dark:bg-gray-800 p-4 rounded-xl shadow hover:shadow-lg transition"
+            className="w-full relative rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group"
+            style={{
+              backgroundImage: movie.posterUrl ? `url(${movie.posterUrl})` : 'none',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              minHeight: '200px'
+            }}
           >
-            <div className="flex gap-4">
-              {movie.posterUrl && (
-                <img
-                  src={movie.posterUrl}
-                  alt={movie.title}
-                  className="w-20 h-auto rounded-lg"
-                />
+            {/* Gradient overlay - darker at top, gradually revealing poster at bottom */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/70 to-black/40" />
+            
+            {/* Content overlay */}
+            <div className="relative p-6 text-white">
+              <h3 className="text-xl font-bold mb-2 text-shadow-lg">
+                {movie.title}
+              </h3>
+
+              {movie.overview && (
+                <p className="text-sm text-gray-200 mb-4 line-clamp-2 text-shadow-md">
+                  {movie.overview}
+                </p>
               )}
 
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  {movie.title}
-                </h3>
-
-                {movie.overview && (
-                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 line-clamp-3">
-                    {movie.overview}
-                  </p>
-                )}
+              {/* Where to Watch hint - appears on hover */}
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="text-xs text-gray-300 font-medium">
+                  Click to view details and where to watch →
+                </div>
               </div>
             </div>
+
+            {/* Fallback for movies without posters */}
+            {!movie.posterUrl && (
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+            )}
           </button>
         ))}
       </div>
