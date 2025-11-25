@@ -29,6 +29,27 @@ export default function MovieList({ movies = [], onSelect }) {
     return () => window.removeEventListener('resize', updateColumns)
   }, [])
   
+  // Clear selection when movies array changes (new search)
+  useEffect(() => {
+    // Clear selection when movies array changes to prevent stale state
+    setSelectedMovie(null)
+    setSelectedIndex(null)
+  }, [movies?.length])
+  
+  // Scroll to selected movie details when selection changes
+  // MUST be before early return to maintain consistent hook order
+  useEffect(() => {
+    if (selectedMovie && detailsRef.current) {
+      setTimeout(() => {
+        detailsRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+          inline: 'nearest'
+        })
+      }, 150)
+    }
+  }, [selectedMovie])
+  
   if (!movies || !Array.isArray(movies) || !movies.length) {
     return null;
   }
@@ -79,19 +100,6 @@ export default function MovieList({ movies = [], onSelect }) {
     const row = getRowForIndex(index)
     return Math.min((row + 1) * columnsPerRow - 1, movies.length - 1)
   }
-  
-  // Scroll to selected movie details when selection changes
-  useEffect(() => {
-    if (selectedMovie && detailsRef.current) {
-      setTimeout(() => {
-        detailsRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-          inline: 'nearest'
-        })
-      }, 150)
-    }
-  }, [selectedMovie])
 
   const getPosterUrl = (movie) => {
     if (movie.posterUrl && !movie.posterUrl.includes('placehold.co')) {
@@ -197,8 +205,9 @@ export default function MovieList({ movies = [], onSelect }) {
           </div>
           
           {/* Insert MovieDetails after the last item in the selected row */}
-          {shouldShowDetails && selectedMovie && (
+          {shouldShowDetails && selectedMovie && selectedMovie.id && (
             <div 
+              key={`details-${selectedMovie.id}-${selectedIndex}`}
               ref={detailsRef}
               className="col-span-full"
               style={{
@@ -206,7 +215,7 @@ export default function MovieList({ movies = [], onSelect }) {
                 animation: 'slideDown 0.4s ease-out'
               }}
             >
-              <MovieDetails movie={selectedMovie} onClose={handleCloseDetails} />
+              <MovieDetails key={`movie-details-${selectedMovie.id}`} movie={selectedMovie} onClose={handleCloseDetails} />
             </div>
           )}
         </React.Fragment>
