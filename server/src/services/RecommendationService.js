@@ -3,9 +3,17 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { parse } from 'csv-parse/sync';
+import dotenv from 'dotenv';
+import OpenAI from 'openai';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 function resolveCsvPath() {
   const configured = process.env.CSV_PATH;
@@ -124,216 +132,80 @@ function parseGenres(genresStr) {
 }
 
 /**
- * Analyzes favorite movies to extract common patterns
+ * Uses OpenAI to identify which genre the favorite movies identify most with
  */
-function analyzeFavorites(favoriteMovies) {
+async function identifyStrongestGenre(favoriteMovies) {
   if (!favoriteMovies || favoriteMovies.length === 0) {
     return null;
   }
 
-  // Extract all genres from favorites
-  const allGenres = [];
-  const popularities = [];
-  const voteAverages = [];
-  const voteCounts = [];
-  const years = [];
-  const languages = new Set();
-
-  favoriteMovies.forEach(movie => {
-    // Parse genres
-    const genres = parseGenres(movie.genres);
-    allGenres.push(...genres);
-
-    // Collect numeric values
-    if (movie.popularity != null) {
-      popularities.push(parseFloat(movie.popularity) || 0);
-    }
-    if (movie.vote_average != null) {
-      voteAverages.push(parseFloat(movie.vote_average) || 0);
-    }
-    if (movie.vote_count != null) {
-      voteCounts.push(parseInt(movie.vote_count) || 0);
-    }
-    if (movie.release_date) {
-      const year = parseInt(movie.release_date.split('-')[0]);
-      if (!isNaN(year)) {
-        years.push(year);
-      }
-    }
-    if (movie.original_language) {
-      languages.add(movie.original_language);
-    }
-  });
-
-  // Find most common genres (appearing in at least 30% of favorites)
-  const genreCounts = {};
-  allGenres.forEach(genre => {
-    genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-  });
-  
-  const threshold = Math.max(1, Math.floor(favoriteMovies.length * 0.3));
-  const commonGenres = Object.entries(genreCounts)
-    .filter(([_, count]) => count >= threshold)
-    .map(([genre, _]) => genre)
-    .sort((a, b) => genreCounts[b] - genreCounts[a]); // Sort by frequency
-
-  // Calculate statistics
-  const avgPopularity = popularities.length > 0 
-    ? popularities.reduce((a, b) => a + b, 0) / popularities.length 
-    : null;
-  const minPopularity = popularities.length > 0 ? Math.min(...popularities) : null;
-  const maxPopularity = popularities.length > 0 ? Math.max(...popularities) : null;
-
-  const avgVoteAverage = voteAverages.length > 0
-    ? voteAverages.reduce((a, b) => a + b, 0) / voteAverages.length
-    : null;
-  const minVoteAverage = voteAverages.length > 0 ? Math.min(...voteAverages) : null;
-  const maxVoteAverage = voteAverages.length > 0 ? Math.max(...voteAverages) : null;
-
-  const avgYear = years.length > 0
-    ? Math.round(years.reduce((a, b) => a + b, 0) / years.length)
-    : null;
-  const yearRange = years.length > 0 ? {
-    min: Math.min(...years),
-    max: Math.max(...years)
-  } : null;
-
-  return {
-    commonGenres,
-    popularityRange: avgPopularity != null ? {
-      avg: avgPopularity,
-      min: minPopularity,
-      max: maxPopularity,
-      // Use a range around the average (±50% or ±10, whichever is larger)
-      lowerBound: Math.max(0, avgPopularity - Math.max(avgPopularity * 0.5, 10)),
-      upperBound: avgPopularity + Math.max(avgPopularity * 0.5, 10)
-    } : null,
-    voteAverageRange: avgVoteAverage != null ? {
-      avg: avgVoteAverage,
-      min: minVoteAverage,
-      max: maxVoteAverage,
-      // Use a range around the average (±1.5 points)
-      lowerBound: Math.max(0, avgVoteAverage - 1.5),
-      upperBound: Math.min(10, avgVoteAverage + 1.5)
-    } : null,
-    yearRange,
-    preferredLanguages: Array.from(languages),
-    favoriteIds: favoriteMovies.map(m => m.id).filter(Boolean)
-  };
-}
-
-/**
- * Generates a precise SQL query based on favorite movie analysis
- */
-function generateRecommendationQuery(analysis, excludeIds = []) {
-  if (!analysis) {
-    return null;
-  }
-
-  const conditions = [];
-  const params = [];
-
-  // Genre matching - movies must have at least one common genre
-  if (analysis.commonGenres.length > 0) {
-    const genreConditions = analysis.commonGenres.map(genre => {
-      params.push(`%'name': '${genre}'%`);
-      return `genres LIKE ?`;
-    });
-    conditions.push(`(${genreConditions.join(' OR ')})`);
-  }
-
-  // Popularity range matching
-  if (analysis.popularityRange) {
-    const { lowerBound, upperBound } = analysis.popularityRange;
-    conditions.push(`popularity >= ? AND popularity <= ?`);
-    params.push(lowerBound, upperBound);
-  }
-
-  // Vote average range matching
-  if (analysis.voteAverageRange) {
-    const { lowerBound, upperBound } = analysis.voteAverageRange;
-    conditions.push(`vote_average >= ? AND vote_average <= ?`);
-    params.push(lowerBound, upperBound);
-  }
-
-  // Year range matching (within ±10 years of the range)
-  if (analysis.yearRange) {
-    const { min, max } = analysis.yearRange;
-    const yearLower = Math.max(1900, min - 10);
-    const yearUpper = max + 10;
-    conditions.push(`CAST(SUBSTR(release_date, 1, 4) AS INTEGER) >= ? AND CAST(SUBSTR(release_date, 1, 4) AS INTEGER) <= ?`);
-    params.push(yearLower, yearUpper);
-  }
-
-  // Exclude favorite movies
-  if (excludeIds.length > 0) {
-    const placeholders = excludeIds.map(() => '?').join(',');
-    conditions.push(`id NOT IN (${placeholders})`);
-    params.push(...excludeIds);
-  }
-
-  // Exclude movies with no genres
-  conditions.push(`genres IS NOT NULL AND genres != '' AND genres != '[]'`);
-
-  // Exclude movies with very low vote counts (unreliable ratings)
-  conditions.push(`vote_count >= 10`);
-
-  if (conditions.length === 0) {
-    return null;
-  }
-
-  // Build the query with scoring
-  // Score = (genre match count * 10) + (popularity similarity * 2) + (vote average similarity * 5)
-  const genreScore = analysis.commonGenres.length > 0
-    ? `(CASE ${analysis.commonGenres.map((genre, idx) => 
-        `WHEN genres LIKE ? THEN 10 ELSE 0 END`
-      ).join(' + ')}`
-    : '0';
-
-  const genreParams = analysis.commonGenres.map(genre => `%'name': '${genre}'%`);
-
-  const sql = `
-    SELECT 
-      id, 
-      title, 
-      overview, 
-      release_date, 
-      genres, 
-      popularity, 
-      poster_path, 
-      original_language,
-      vote_average,
-      vote_count,
-      (
-        ${analysis.commonGenres.map(() => 
-          `(CASE WHEN genres LIKE ? THEN 10 ELSE 0 END)`
-        ).join(' + ')}
-        + (CASE 
-            WHEN popularity BETWEEN ? AND ? THEN 2 ELSE 0 
-          END)
-        + (CASE 
-            WHEN vote_average BETWEEN ? AND ? THEN 5 ELSE 0 
-          END)
-        + (CASE 
-            WHEN CAST(SUBSTR(release_date, 1, 4) AS INTEGER) BETWEEN ? AND ? THEN 2 ELSE 0 
-          END)
-      ) AS relevance_score
-    FROM movies
-    WHERE ${conditions.join(' AND ')}
-    ORDER BY relevance_score DESC, popularity DESC, vote_average DESC
-    LIMIT 50
-  `;
-
-  // Combine all params: genre params for scoring, then original params
-  const allParams = [
-    ...genreParams, // For genre scoring
-    ...(analysis.popularityRange ? [analysis.popularityRange.lowerBound, analysis.popularityRange.upperBound] : []),
-    ...(analysis.voteAverageRange ? [analysis.voteAverageRange.lowerBound, analysis.voteAverageRange.upperBound] : []),
-    ...(analysis.yearRange ? [Math.max(1900, analysis.yearRange.min - 10), analysis.yearRange.max + 10] : []),
-    ...params // Original WHERE clause params
+  // Fixed list of available genres
+  const availableGenres = [
+    'Drama',
+    'Comedy',
+    'Romance',
+    'Thriller',
+    'Action',
+    'Adventure',
+    'Crime',
+    'Family',
+    'Science Fiction',
+    'Fantasy'
   ];
 
-  return { sql, params: allParams };
+  // Create a summary of favorite movies
+  const movieTitles = favoriteMovies.map(m => m.title).join(', ');
+
+  const prompt = `Which one of these genres do these movies identify the most with?
+
+Movies: ${movieTitles}
+
+Available genres:
+${availableGenres.join('\n')}
+
+Return ONLY the genre name, nothing else.`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a movie genre analyzer. Return ONLY one genre name from this exact list: ${availableGenres.join(', ')}. Return nothing else - no quotes, no punctuation, just the genre name.`
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.2,
+      max_tokens: 20
+    });
+
+    let genre = completion.choices[0]?.message?.content?.trim() || null;
+    
+    // Clean up the response (remove quotes, extra whitespace)
+    if (genre) {
+      genre = genre.replace(/^["']|["']$/g, '').trim();
+    }
+    
+    // Verify it's in the available genres list (case-insensitive check)
+    if (genre) {
+      const normalizedGenre = genre.toLowerCase();
+      const matchingGenre = availableGenres.find(g => g.toLowerCase() === normalizedGenre);
+      if (matchingGenre) {
+        console.log(`[RecommendationService] Identified strongest genre: ${matchingGenre}`);
+        return matchingGenre;
+      } else {
+        console.log(`[RecommendationService] OpenAI returned "${genre}" which is not in available genres`);
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('OpenAI API Error:', error);
+    return null;
+  }
 }
 
 function mapDbRowToMovie(row) {
@@ -347,8 +219,7 @@ function mapDbRowToMovie(row) {
     popularity: Number.parseFloat(row.popularity ?? 0) || 0,
     posterPath: row.poster_path ?? '',
     voteAverage: Number.parseFloat(row.vote_average ?? 0) || 0,
-    voteCount: parseInt(row.vote_count ?? 0) || 0,
-    relevanceScore: Number.parseFloat(row.relevance_score ?? 0) || 0
+    voteCount: parseInt(row.vote_count ?? 0) || 0
   };
 }
 
@@ -377,40 +248,49 @@ class RecommendationService {
       `).all(...favoriteIds);
 
       if (favoriteMovies.length === 0) {
+        console.log(`[RecommendationService] No favorite movies found in database for IDs: ${favoriteIds.join(', ')}`);
         return [];
       }
 
-      // Analyze favorites to extract patterns
-      const analysis = analyzeFavorites(favoriteMovies);
+      // Use OpenAI to identify which genre the movies identify most with
+      const strongestGenre = await identifyStrongestGenre(favoriteMovies);
       
-      if (!analysis) {
+      if (!strongestGenre) {
+        console.log(`[RecommendationService] Could not identify a genre`);
         return [];
       }
 
-      // Generate precise SQL query
-      const queryData = generateRecommendationQuery(analysis, favoriteIds);
+      // Query most popular movies with that genre, excluding favorites
+      const excludePlaceholders = favoriteIds.map(() => '?').join(',');
+      const escapedGenre = strongestGenre.replace(/'/g, "''");
+      const genrePattern = `%'name': '${escapedGenre}'%`;
       
-      if (!queryData) {
-        return [];
-      }
-
-      // Execute query
-      const results = db.prepare(queryData.sql).all(...queryData.params);
+      const results = db.prepare(`
+        SELECT 
+          id, 
+          title, 
+          overview, 
+          release_date, 
+          genres, 
+          popularity, 
+          poster_path, 
+          original_language,
+          vote_average,
+          vote_count
+        FROM movies
+        WHERE genres LIKE ?
+          AND genres IS NOT NULL 
+          AND genres != '' 
+          AND genres != '[]'
+          AND vote_count >= 10
+          AND id NOT IN (${excludePlaceholders})
+        ORDER BY popularity DESC, vote_average DESC
+        LIMIT 6
+      `).all(genrePattern, ...favoriteIds);
       
       // Map to movie objects
       const movies = results.map(mapDbRowToMovie);
       
-      // Sort by relevance score (already done in SQL, but ensure it)
-      movies.sort((a, b) => {
-        if (b.relevanceScore !== a.relevanceScore) {
-          return b.relevanceScore - a.relevanceScore;
-        }
-        if (b.popularity !== a.popularity) {
-          return b.popularity - a.popularity;
-        }
-        return b.voteAverage - a.voteAverage;
-      });
-
       return movies;
     } catch (error) {
       console.error('Recommendation Service Error:', error);
@@ -422,4 +302,3 @@ class RecommendationService {
 }
 
 export default RecommendationService;
-

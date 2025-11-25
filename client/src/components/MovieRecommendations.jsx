@@ -23,34 +23,39 @@ export default function MovieRecommendations({ onSelect }) {
         setLoading(true);
         setError("");
 
-        const seedTitles = favorites
-          .map((m) => m.title)
-          .slice(0, 3)
-          .join(", ");
+        // Extract all favorite movie IDs (not just first 3)
+        const favoriteIds = favorites
+          .map((m) => m.id)
+          .filter((id) => id != null && !isNaN(id));
 
-        const query = `recommend movies similar to ${seedTitles}`;
+        if (favoriteIds.length === 0) {
+          setRecommendations([]);
+          return;
+        }
 
+        // Use the new recommendation endpoint that analyzes all favorites
+        const favoriteIdsParam = favoriteIds.join(",");
         const res = await fetch(
-          `/api/ai-search?query=${encodeURIComponent(query)}&lang=${language}`
+          `/api/movies/recommendations?favoriteIds=${encodeURIComponent(favoriteIdsParam)}`
         );
 
-        if (!res.ok) throw new Error("Failed to fetch recommendations");
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to fetch recommendations");
+        }
 
         const data = await res.json();
         const movies = data.movies || [];
 
-        const favoriteIds = new Set(favorites.map((m) => m.id));
-
-        const formatted = movies
-          .filter((m) => !favoriteIds.has(m.id))
-          .map((m) => ({
-            ...m,
-            posterUrl: m.posterUrl
-              ? m.posterUrl
-              : m.posterPath
-              ? `${TMDB_IMAGE_BASE}${m.posterPath}`
-              : "",
-          }));
+        // Format movies with poster URLs
+        const formatted = movies.map((m) => ({
+          ...m,
+          posterUrl: m.posterUrl
+            ? m.posterUrl
+            : m.posterPath
+            ? `${TMDB_IMAGE_BASE}${m.posterPath}`
+            : "",
+        }));
 
         setRecommendations(formatted);
       } catch (error) {
@@ -62,7 +67,7 @@ export default function MovieRecommendations({ onSelect }) {
     }
 
     fetchRecommendations();
-  }, [favorites, language]);
+  }, [favorites]);
 
   if (!favorites?.length) return null;
 
