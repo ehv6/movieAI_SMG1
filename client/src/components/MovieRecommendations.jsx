@@ -80,34 +80,45 @@ export default function MovieRecommendations({ onSelect }) {
       return;
     }
 
-    async function fetchAi() {
+    async function fetchAiRecommendations() {
       try {
         setAiLoading(true);
         setAiError("");
 
-        // Build a concise query from favorite titles
-        const titles = favorites.map((m) => m.title).filter(Boolean);
-        if (titles.length === 0) {
+        // Extract favorite movie IDs
+        const favoriteIds = favorites
+          .map((m) => m.id)
+          .filter((id) => id != null && !isNaN(id));
+
+        if (favoriteIds.length === 0) {
           setAiRecommendations([]);
           return;
         }
 
-        const query = `Recommend movies similar to these favorites: ${titles.join(", ")}. Return the most relevant results.`;
+        const favoriteIdsParam = favoriteIds.join(",");
+        const res = await fetch(
+          `/api/movies/ai-recommendations?favoriteIds=${encodeURIComponent(favoriteIdsParam)}`
+        );
 
-        const res = await fetch(`/api/search/ai-search?query=${encodeURIComponent(query)}`);
         if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || 'Failed to fetch AI recommendations');
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to fetch AI recommendations');
         }
 
         const data = await res.json();
-        const movies = (data.movies || []).map((m) => ({
+        const movies = data.movies || [];
+
+        // Format movies with poster URLs
+        const formatted = movies.map((m) => ({
           ...m,
-          posterUrl: m.posterPath ? `${TMDB_IMAGE_BASE}${m.posterPath}` : (m.posterUrl || ""),
+          posterUrl: m.posterUrl
+            ? m.posterUrl
+            : m.posterPath
+            ? `${TMDB_IMAGE_BASE}${m.posterPath}`
+            : "",
         }));
 
-        // Limit to 6 AI recommendations
-        setAiRecommendations(movies.slice(0, 6));
+        setAiRecommendations(formatted);
       } catch (err) {
         console.error('AI recommendation error:', err);
         setAiError(err.message);
@@ -116,7 +127,7 @@ export default function MovieRecommendations({ onSelect }) {
       }
     }
 
-    fetchAi();
+    fetchAiRecommendations();
   }, [favorites]);
 
   if (!favorites?.length) return null;

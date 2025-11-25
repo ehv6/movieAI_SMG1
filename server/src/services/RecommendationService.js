@@ -208,6 +208,87 @@ Return ONLY the genre name, nothing else.`;
   }
 }
 
+/**
+ * Uses OpenAI to get movie recommendations based on favorite movies
+ */
+async function getAiRecommendations(favoriteMovies, db) {
+  if (!favoriteMovies || favoriteMovies.length === 0) {
+    return [];
+  }
+
+  const movieTitles = favoriteMovies.map(m => m.title).join(', ');
+
+  const prompt = `Based on these favorite movies: ${movieTitles}
+
+Recommend 6 similar movies that the user would enjoy. Return ONLY a JSON array of movie titles, nothing else. Format:
+["Movie Title 1", "Movie Title 2", "Movie Title 3", "Movie Title 4", "Movie Title 5", "Movie Title 6"]`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a movie recommendation expert. Return ONLY a valid JSON array of 6 movie titles, nothing else - no markdown, no explanation, just the JSON array.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 200
+    });
+
+    let response = completion.choices[0]?.message?.content?.trim() || '[]';
+    
+    // Clean up the response (remove markdown code blocks if present)
+    response = response.replace(/```json\n?|\n?```/g, '').trim();
+    
+    // Parse the JSON array
+    const recommendedTitles = JSON.parse(response);
+    
+    if (!Array.isArray(recommendedTitles) || recommendedTitles.length === 0) {
+      console.log('[RecommendationService] OpenAI returned invalid or empty array');
+      return [];
+    }
+
+    console.log(`[RecommendationService] OpenAI recommended: ${recommendedTitles.join(', ')}`);
+
+    // Look up these movies in the database
+    const movies = [];
+    for (const title of recommendedTitles) {
+      const result = db.prepare(`
+        SELECT 
+          id, 
+          title, 
+          overview, 
+          release_date, 
+          genres, 
+          popularity, 
+          poster_path, 
+          original_language,
+          vote_average,
+          vote_count
+        FROM movies
+        WHERE LOWER(title) = LOWER(?)
+        ORDER BY popularity DESC
+        LIMIT 1
+      `).get(title);
+
+      if (result) {
+        movies.push(mapDbRowToMovie(result));
+      }
+    }
+
+    console.log(`[RecommendationService] Found ${movies.length} AI-recommended movies in database`);
+    return movies;
+  } catch (error) {
+    console.error('OpenAI API Error for recommendations:', error);
+    return [];
+  }
+}
+
 function mapDbRowToMovie(row) {
   return {
     id: row.id ?? null,
@@ -295,6 +376,46 @@ class RecommendationService {
     } catch (error) {
       console.error('Recommendation Service Error:', error);
       throw new Error(`Failed to generate recommendations: ${error.message}`);
+    } finally {
+      db.close();
+    }
+  }
+
+  /**
+   * Gets AI-powered recommendations based on favorite movie IDs
+   * @param {number[]} favoriteIds - Array of favorite movie IDs
+   * @returns {Promise<Array>} Array of AI-recommended movies
+   */
+  static async getAiRecommendations(favoriteIds) {
+    if (!favoriteIds || favoriteIds.length === 0) {
+      return [];
+    }
+
+    // Load database
+    const db = loadCsvIntoDatabase();
+
+    try {
+      // Fetch full data for favorite movies
+      const placeholders = favoriteIds.map(() => '?').join(',');
+      const favoriteMovies = db.prepare(`
+        SELECT id, title, genres, popularity, vote_average, vote_count, 
+               release_date, original_language
+        FROM movies
+        WHERE id IN (${placeholders})
+      `).all(...favoriteIds);
+
+      if (favoriteMovies.length === 0) {
+        console.log(`[RecommendationService] No favorite movies found for AI recommendations`);
+        return [];
+      }
+
+      // Use OpenAI to get direct recommendations
+      const movies = await getAiRecommendations(favoriteMovies, db);
+      
+      return movies;
+    } catch (error) {
+      console.error('AI Recommendation Service Error:', error);
+      throw new Error(`Failed to generate AI recommendations: ${error.message}`);
     } finally {
       db.close();
     }
