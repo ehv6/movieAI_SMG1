@@ -16,7 +16,7 @@ export default function MovieDetails({ movie, onClose }) {
   const { addFavorite, removeFavorite, isFavorite } = 
     useContext(FavoritesContext);
 
-  const isFav = movieData && isFavorite(movieData.id);
+  const isFav = movieData && isFavorite(movieData?.id);
 
   // Handle both posterPath (from search) and posterUrl (from carousel)
   // Check movieData first (from details API), then fallback to movie prop
@@ -178,5 +178,3 @@ export default function MovieDetails({ movie, onClose }) {
     </div>
   );
 }
-
-

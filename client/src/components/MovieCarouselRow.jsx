@@ -290,8 +290,9 @@ function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
         </div>
         
         {/* MovieDetails inline below carousel */}
-        {selectedMovie && (
+        {selectedMovie && selectedMovie.id && (
           <div 
+            key={`carousel-details-${selectedMovie.id}`}
             ref={detailsRef}
             className="mt-4 movie-details-expand"
             style={{
@@ -299,6 +300,7 @@ function MovieCarouselRow({ title, fetchUrl, onMovieSelect }) {
             }}
           >
             <MovieDetails 
+              key={`carousel-movie-details-${selectedMovie.id}`}
               movie={selectedMovie} 
               onClose={() => {
                 setSelectedMovie(null);
