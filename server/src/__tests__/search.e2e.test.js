@@ -57,7 +57,7 @@ describe('GET /api/search', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ movies: mockMovies });
-    expect(mockSearchMovies).toHaveBeenCalledWith('star');
+    expect(mockSearchMovies).toHaveBeenCalledWith('star', 'en');
   });
 
   test('returns 500 when service throws', async () => {

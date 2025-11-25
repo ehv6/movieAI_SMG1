@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useRef, useEffect } from "react";
 import { FavoritesContext } from "../contexts/FavoritesContext";
 import MovieDetails from "./MovieDetails";
 import MovieRecommendations from "./MovieRecommendations";
@@ -7,7 +7,21 @@ const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 
 export default function Favorites() {
   const { favorites } = useContext(FavoritesContext);
-  const [selected, setSelected] = useState(null); 
+  const [selected, setSelected] = useState(null);
+  const detailsRef = useRef(null);
+  
+  // Scroll to selected movie details when selection changes
+  useEffect(() => {
+    if (selected && detailsRef.current) {
+      setTimeout(() => {
+        detailsRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+          inline: 'nearest'
+        })
+      }, 100)
+    }
+  }, [selected]) 
 
   if (!favorites || favorites.length === 0) {
     return <h2 className="p-5 text-gray-900 dark:text-gray-100">No favorites saved yet.</h2>;
@@ -52,10 +66,12 @@ export default function Favorites() {
       <MovieRecommendations onSelect={setSelected} />
       
       {selected && (
-        <MovieDetails
-        movie={selected}
-        onClose={() => setSelected(null)}
-        />
+        <div ref={detailsRef}>
+          <MovieDetails
+            movie={selected}
+            onClose={() => setSelected(null)}
+          />
+        </div>
       )}
     </div>
   );

@@ -27,8 +27,8 @@ export default function WhereToWatch({ movieId }) {
     fetchProviders();
   }, [movieId]);
 
-  if (loading) return <p className="text-gray-500">{t('loadingStreamingInfo')}</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (loading) return <p className="text-gray-300">{t('loadingStreamingInfo')}</p>;
+  if (error) return <p className="text-red-300">{error}</p>;
 
   if (!providers) return null;
 
@@ -40,27 +40,27 @@ export default function WhereToWatch({ movieId }) {
     <div className="mt-4">
       {hasFlatrate && (
         <div className="mb-4">
-          <h4 className="font-semibold text-gray-900 dark:text-gray-100">{t('stream')}</h4>
+          <h4 className="font-semibold text-white text-shadow-md mb-2">{t('stream')}</h4>
           <ProviderRow list={providers.flatrate} />
         </div>
       )}
 
       {hasRent && (
         <div className="mb-4">
-          <h4 className="font-semibold text-gray-900 dark:text-gray-100">{t('rent')}</h4>
+          <h4 className="font-semibold text-white text-shadow-md mb-2">{t('rent')}</h4>
           <ProviderRow list={providers.rent} />
         </div>
       )}
 
       {hasBuy && (
         <div>
-          <h4 className="font-semibold text-gray-900 dark:text-gray-100">{t('buy')}</h4>
+          <h4 className="font-semibold text-white text-shadow-md mb-2">{t('buy')}</h4>
           <ProviderRow list={providers.buy} />
         </div>
       )}
 
       {!hasFlatrate && !hasRent && !hasBuy && (
-        <p className="text-gray-500 dark:text-gray-400">{t('noStreamingData')}</p>
+        <p className="text-gray-300">{t('noStreamingData')}</p>
       )}
     </div>
   );
@@ -70,7 +70,7 @@ function ProviderRow({ list }) {
   return (
     <div className="flex flex-wrap gap-3 mt-2">
       {list.map((p) => (
-        <div key={p.providerId} className="flex items-center gap-2">
+        <div key={p.providerId} className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-2 rounded-lg hover:bg-white/20 transition-colors">
           {p.logoUrl && (
             <img
               src={p.logoUrl}
@@ -79,7 +79,7 @@ function ProviderRow({ list }) {
               title={p.name}
             />
           )}
-          <span className="text-sm text-gray-700 dark:text-gray-300">{p.name}</span>
+          <span className="text-sm text-white font-medium">{p.name}</span>
         </div>
       ))}
     </div>
