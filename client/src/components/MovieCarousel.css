@@ -39,7 +39,7 @@
 
 .movie-card {
   flex: 0 0 auto;
-  width: 200px;
+  width: clamp(200px, 15vw, 280px);
   aspect-ratio: 2/3;
   border-radius: 0.5rem;
   overflow: hidden;

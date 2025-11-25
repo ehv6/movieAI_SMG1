@@ -81,12 +81,12 @@ function AppContent() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 min-h-screen">
-      <header className="flex items-center justify-between mb-6">
+    <div className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto p-6 xl:p-8 2xl:p-10 min-h-screen">
+      <header className="flex items-center justify-between mb-6 xl:mb-8">
         <img 
           src={theme === 'dark' ? logoWhite : logoBlack} 
           alt={t('appTitle')} 
-          className="h-[168px] w-auto select-none"
+          className="h-[140px] md:h-[168px] xl:h-[200px] 2xl:h-[240px] w-auto select-none"
         />
         <div className="flex items-center gap-3">
           <LanguageSwitch />
@@ -144,7 +144,7 @@ export default function App() {
         <SearchHistoryProvider>
           <FavoritesProvider>
             <NavBar currentView={view} onChangeView={setView} />
-            <div className="max-w-4xl mx-auto p-6 min-h-screen"> {view === "home" ? (
+            <div className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto p-6 xl:p-8 2xl:p-10 min-h-screen"> {view === "home" ? (
             <AppContent />
             ) : (
             <Favorites /> )}

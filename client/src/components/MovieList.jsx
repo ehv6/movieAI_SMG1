@@ -16,7 +16,8 @@ export default function MovieList({ movies = [], onSelect }) {
   useEffect(() => {
     const updateColumns = () => {
       const width = window.innerWidth
-      if (width >= 1280) setColumnsPerRow(5) // xl
+      if (width >= 1536) setColumnsPerRow(7) // 2xl
+      else if (width >= 1280) setColumnsPerRow(6) // xl
       else if (width >= 1024) setColumnsPerRow(4) // lg
       else if (width >= 768) setColumnsPerRow(3) // md
       else if (width >= 640) setColumnsPerRow(2) // sm
@@ -118,7 +119,7 @@ export default function MovieList({ movies = [], onSelect }) {
   return (
     <div>
       <div 
-        className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-6"
+        className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 gap-6 xl:gap-8 mt-6"
         role="list"
         aria-label="Movie search results"
       >

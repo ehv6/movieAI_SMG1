@@ -6,7 +6,7 @@ export default function CarouselSection({ onMovieSelect }) {
   const { t } = useI18n();
   
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 py-8 px-12">
+    <div className="bg-gray-100 dark:bg-gray-900 py-8 xl:py-10 2xl:py-12 px-6 xl:px-12 2xl:px-16">
       <MovieCarouselRow title={t('featuredMovies')} fetchUrl="/api/movies/featured" onMovieSelect={onMovieSelect} />
       <MovieCarouselRow title={t('newReleases')} fetchUrl="/api/movies/new-releases" onMovieSelect={onMovieSelect} />
       <MovieCarouselRow title={t('action')} fetchUrl="/api/movies/action" onMovieSelect={onMovieSelect} />

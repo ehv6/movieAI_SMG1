@@ -108,10 +108,10 @@ export default function MovieDetails({ movie, onClose }) {
       )}
 
       {/* Content overlay */}
-      <div className="relative p-6 md:p-8 text-white">
+      <div className="relative p-6 md:p-8 xl:p-10 2xl:p-12 text-white">
         {/* Header with Close button */}
-        <div className="flex items-start justify-between mb-4">
-          <h2 id="movie-title" className="text-3xl md:text-4xl font-bold mb-2 text-shadow-lg flex-1">
+        <div className="flex items-start justify-between mb-4 xl:mb-6">
+          <h2 id="movie-title" className="text-3xl md:text-4xl xl:text-5xl 2xl:text-6xl font-bold mb-2 text-shadow-lg flex-1">
             {movieData.title}
           </h2>
           {onClose && (
@@ -151,17 +151,17 @@ export default function MovieDetails({ movie, onClose }) {
 
         {/* Description */}
         {movieData.overview ? (
-          <div className="mb-6 max-w-3xl">
-            <h3 className="text-xl font-semibold mb-3 text-shadow-md">{t('description')}</h3>
-            <div className="bg-black/40 backdrop-blur-md rounded-lg p-4 border border-white/10 shadow-lg">
-              <p className="text-base leading-7 text-gray-100">
+          <div className="mb-6 max-w-3xl xl:max-w-4xl 2xl:max-w-5xl">
+            <h3 className="text-xl xl:text-2xl font-semibold mb-3 text-shadow-md">{t('description')}</h3>
+            <div className="bg-black/40 backdrop-blur-md rounded-lg p-4 xl:p-6 border border-white/10 shadow-lg">
+              <p className="text-base xl:text-lg leading-7 text-gray-100">
                 {movieData.overview}
               </p>
             </div>
           </div>
         ) : (
           <div className="mb-6">
-            <div className="bg-black/40 backdrop-blur-md rounded-lg p-4 border border-white/10 max-w-3xl">
+            <div className="bg-black/40 backdrop-blur-md rounded-lg p-4 xl:p-6 border border-white/10 max-w-3xl xl:max-w-4xl 2xl:max-w-5xl">
               <p className="text-base text-gray-300 italic">{t('noDescription')}</p>
             </div>
           </div>
