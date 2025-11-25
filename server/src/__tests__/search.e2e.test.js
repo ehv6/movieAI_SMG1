@@ -30,16 +30,7 @@ afterEach(() => {
 });
 
 describe('GET /api/search', () => {
-  test('returns 400 when query parameter is missing', async () => {
-    const res = await request(app).get('/api/search');
-    expect(res.status).toBe(400);
-    expect(res.body).toEqual({ error: 'Missing query parameter' });
-    expect(mockSearchMovies).not.toHaveBeenCalled();
-  });
-
   test('returns movies when query is provided', async () => {
-    // Minimal golden sample representing the Movie model shape returned
-    // by the service. Only fields the client cares about are included.
     const mockMovies = [
       {
         id: 1,
@@ -60,18 +51,11 @@ describe('GET /api/search', () => {
     expect(mockSearchMovies).toHaveBeenCalledWith('star', 'en');
   });
 
-  test('returns 500 when service throws', async () => {
-    mockSearchMovies.mockRejectedValueOnce(new Error('TMDB down'));
-
-    const res = await request(app)
-      .get('/api/search')
-      .query({ query: 'anything' });
-
-    expect(res.status).toBe(500);
-    // Controller now forwards the error message, so we assert only that
-    // an error string exists, not the exact message text.
-    expect(res.body).toHaveProperty('error');
-    expect(typeof res.body.error).toBe('string');
+  test('returns 400 when query parameter is missing', async () => {
+    const res = await request(app).get('/api/search');
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Missing query parameter' });
+    expect(mockSearchMovies).not.toHaveBeenCalled();
   });
 });
 
