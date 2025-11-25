@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useRef, useEffect } from "react";
 import { FavoritesContext } from "../contexts/FavoritesContext";
 import MovieDetails from "./MovieDetails";
 import MovieRecommendations from "./MovieRecommendations";
@@ -8,39 +8,31 @@ const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 
 export default function Favorites() {
   const { favorites } = useContext(FavoritesContext);
-  const [selected, setSelected] = useState(null); 
-  const{language} = useI18n();
-  const lang = (language || 'en').toLowerCase();
-  const emptyMessage = 
-    lang.startsWith('es') ? 'Toadivia no has guradado favoritos..':
-    lang.startsWith('fr') ? 'Aucun favori enregistre pour lé moment. ':
-    'No favorites saved yet.';
-   const favoritesTitle =
-    lang.startsWith('es') ? 'Tus favoritos':
-    lang.startsWith('fr') ? 'Vos favoris' :
-    'Your Favorites';
-   const backToTopLabel = 
-   lang.startsWith('es') ? 'Arriba':
-   lang.startsWith('fr') ? 'Haut ':
-   'Top';
-
-
+  const [selected, setSelected] = useState(null);
+  const detailsRef = useRef(null);
+  
+  // Scroll to selected movie details when selection changes
+  useEffect(() => {
+    if (selected && detailsRef.current) {
+      setTimeout(() => {
+        detailsRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+          inline: 'nearest'
+        })
+      }, 100)
+    }
+  }, [selected]) 
 
   if (!favorites || favorites.length === 0) {
-    return <h2 style={{ padding: "20px" }}>{emptyMessage}</h2>;
+    return <h2 className="p-5 text-gray-900 dark:text-gray-100">No favorites saved yet.</h2>;
   }
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>{favoritesTitle}</h1>
+    <div className="p-5">
+      <h1 className="text-gray-900 dark:text-gray-100 mb-4">Your Favorites</h1>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-          gap: "20px",
-        }}
-      >
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-5">
         {favorites.map((movie) => {
           const rawPoster =
             movie.posterUrl ||
@@ -55,23 +47,16 @@ export default function Favorites() {
             <div
               key={movie.id}
               onClick={() => setSelected(movie)}
-              style={{
-                border: "1px solid #ccc",
-                padding: "10px",
-                borderRadius: "8px",
-                textAlign: "center",
-                cursor: "pointer",
-                background: "white",
-              }}
+              className="border border-gray-300 dark:border-gray-700 p-2.5 rounded-lg text-center cursor-pointer bg-white dark:bg-gray-800 hover:shadow-md dark:hover:shadow-gray-700 transition-shadow"
             >
               {src && (
                 <img
                   src={src}
                   alt={movie.title}
-                  style={{ width: "100%", borderRadius: "4px" }}
+                  className="w-full rounded"
                 />
               )}
-              <h3 style={{ marginTop: "8px", fontSize: "0.95rem" }}>
+              <h3 className="mt-2 text-sm text-gray-900 dark:text-gray-100">
                 {movie.title}
               </h3>
             </div>
@@ -82,10 +67,12 @@ export default function Favorites() {
       <MovieRecommendations onSelect={setSelected} />
 
       {selected && (
-        <MovieDetails
-        movie={selected}
-        onClose={() => setSelected(null)}
-        />
+        <div ref={detailsRef}>
+          <MovieDetails
+            movie={selected}
+            onClose={() => setSelected(null)}
+          />
+        </div>
       )}
 
         <button

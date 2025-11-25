@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ThemeProvider } from './contexts/ThemeContext'
+import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 import { SearchHistoryProvider, useSearchHistory } from './contexts/SearchHistoryContext'
 import { I18nProvider, useI18n } from './contexts/I18nContext'
 import { FavoritesProvider } from './contexts/FavoritesContext.jsx'
@@ -14,6 +14,8 @@ import LanguageSwitch from './components/LanguageSwitch.jsx'
 import CarouselSection from './components/CarouselSection.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import AiSearchInfo from './components/AiSearchInfo.jsx'
+import logoWhite from './assets/logo/New Project white.svg'
+import logoBlack from './assets/logo/New Project.svg'
 
 function AppContent() {
   const [movies, setMovies] = useState([]);
@@ -22,6 +24,7 @@ function AppContent() {
   const [selected, setSelected] = useState(null);
   const { addToHistory } = useSearchHistory();
   const { t, language } = useI18n();
+  const { theme } = useTheme();
 
   async function handleSearch(query) {
     try {
@@ -33,10 +36,14 @@ function AppContent() {
         throw new Error(err.error || 'Request failed');
       }
       const data = await res.json();
-      setMovies(data.movies ?? []);
+      console.log('Search response:', data);
+      const moviesArray = Array.isArray(data.movies) ? data.movies : [];
+      console.log('Movies array:', moviesArray);
+      setMovies(moviesArray);
       setSelected(null);
       addToHistory(query, 'search');
     } catch (e) {
+      console.error('Search error:', e);
       setError(e.message);
       setMovies([]);
     } finally {
@@ -74,11 +81,13 @@ function AppContent() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 min-h-screen">
-      <header className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          {t('appTitle')}
-        </h1>
+    <div className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto p-6 xl:p-8 2xl:p-10 min-h-screen">
+      <header className="flex items-center justify-between mb-6 xl:mb-8">
+        <img 
+          src={theme === 'dark' ? logoWhite : logoBlack} 
+          alt={t('appTitle')} 
+          className="h-[140px] md:h-[168px] xl:h-[200px] 2xl:h-[240px] w-auto select-none"
+        />
         <div className="flex items-center gap-3">
           <LanguageSwitch />
           <ThemeToggle />
@@ -112,8 +121,9 @@ function AppContent() {
           </p>
         )}
         
-        <MovieList movies={movies} onSelect={setSelected} />
-        <MovieDetails movie={selected} onClose={() => setSelected(null)} />
+        <ErrorBoundary>
+          <MovieList movies={movies} onSelect={setSelected} />
+        </ErrorBoundary>
       </main>
       
       {/* === ADD NEW COMPONENT BELOW EXISTING CONTENT === */}
@@ -134,7 +144,7 @@ export default function App() {
         <SearchHistoryProvider>
           <FavoritesProvider>
             <NavBar currentView={view} onChangeView={setView} />
-            <div className="max-w-4xl mx-auto p-6 min-h-screen"> {view === "home" ? (
+            <div className="max-w-4xl xl:max-w-6xl 2xl:max-w-7xl mx-auto p-6 xl:p-8 2xl:p-10 min-h-screen"> {view === "home" ? (
             <AppContent />
             ) : (
             <Favorites /> )}

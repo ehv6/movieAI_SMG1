@@ -6,149 +6,131 @@ const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
 
 export default function MovieRecommendations({ onSelect }) {
   const { favorites } = useContext(FavoritesContext);
-  const {language } = useI18n();
-  const lang = (language || 'en').toLowerCase();
-  const [recommendations, setRecommendations] = useState([]);
+  const { language, t } = useI18n();
+
+  const [datasetRecommendations, setDatasetRecommendations] = useState([]);
+  const [aiRecommendations, setAiRecommendations] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // Helper: Extract clean genre names from TMDB genre JSON
-  function extractGenres(movie) {
-    try {
-      if (!movie.genres) return [];
-      if (Array.isArray(movie.genres)) {
-        return movie.genres.map((g) => g.name || g.id || "").filter(Boolean);
-      }
-      // Handle raw JSON string from CSV/TMDB
-      const parsed = JSON.parse(movie.genres);
-      return parsed.map((g) => g.name || "").filter(Boolean);
-    } catch {
-      return [];
-    }
-  }
-
-  // Build weighted genre profile from favorites
-  function buildUserProfile() {
-    const profile = {};
-    favorites.forEach((movie) => {
-      const genres = extractGenres(movie);
-      genres.forEach((g) => {
-        profile[g] = (profile[g] || 0) + 1;
-      });
-    });
-    return profile;
-  }
-
-  // Score a candidate movie relative to user profile
-  function scoreMovie(movie, profile) {
-    const genres = extractGenres(movie);
-
-    let score = 0;
-    genres.forEach((g) => {
-      score += profile[g] || 0; // weighted match
-    });
-
-    // Slight boost for popularity & rating
-    score += (movie.popularity || 0) * 0.02;
-    score += (movie.vote_average || 0) * 0.3;
-
-    return score;
-  }
-
-  function explainReccomendation(movie, profile) {
-    const genres = extractGenres(movie);
-    const matched = genres.filter((g) => profile[g]);
-    const topMatches = matched.slice(0,3);
-
-    const parts = [];
-    const joined = topMatches.join(", ");
-
-    if (topMatches.length > 0) {
-        if (lang.startsWith('es')) {
-            parts.push(`te gustan las películas de ${joined}`);}
-        else if (lang.startsWith('fr')) {
-            parts.push(`vous aimez les films de ${joined}`);}
-        else {
-            parts.push(`you like ${joined} movies`);
-        }        
-    }
-
-    if ((movie.popularity || 0) > 50) {
-        if (lang.startsWith('es')) {
-            parts.push('es popular entre otros usuarios');}
-        else if (lang.startsWith('fr')) {
-            parts.push('il est populaire auprès des autres spectateurs');}
-        else {
-            parts.push('it is popular with other viewers');
-        }}
-      
-    if (parts.length === 0) {
-        if (lang.startsWith('es')) return 'Basado en tus películas favoritas.';
-        if (lang.startsWith('fr')) return 'Basé sur vos films favoris.';
-        return 'Based on patterns in your favorite movies.';
-      }
-  
-      const andWord = lang.startsWith('es') ? 'y' : lang.startsWith('fr') ? 'et' : 'and';
-      const sentence = parts.join(` ${andWord} `);
-      return sentence.charAt(0).toUpperCase() + sentence.slice(1) + '.';
-    }
-  
+  const [aiLoading, setAiLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [aiError, setAiError] = useState("");
 
   useEffect(() => {
-    async function generateRecommendations() {
-      if (favorites.length === 0) return;
+    if (!favorites || favorites.length === 0) {
+      setDatasetRecommendations([]);
+      setAiRecommendations([]);
+      return;
+    }
 
-      setLoading(true);
-
+    async function fetchRecommendations() {
       try {
-        // Step 1: Build user genre preference profile
-        const profile = buildUserProfile();
+        setLoading(true);
+        setError("");
 
-        // Step 2: Fetch a broad list of popular movies from your server
-        const res = await fetch(`/api/movies/popular?lang=${language}`);
-        if (!res.ok) {
-        throw new Error('Failed to fetch popular movies');
+        // Extract all favorite movie IDs (not just first 3)
+        const favoriteIds = favorites
+          .map((m) => m.id)
+          .filter((id) => id != null && !isNaN(id));
+
+        if (favoriteIds.length === 0) {
+          setDatasetRecommendations([]);
+          return;
         }
+
+        // Use the new recommendation endpoint that analyzes all favorites
+        const favoriteIdsParam = favoriteIds.join(",");
+        const res = await fetch(
+          `/api/movies/recommendations?favoriteIds=${encodeURIComponent(favoriteIdsParam)}`
+        );
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to fetch recommendations");
+        }
+
         const data = await res.json();
 
         // Handle both shapes: array or { movies: [...] }
         const allMovies = Array.isArray(data) ? data : (data.movies || []);
 
-        // Step 3: Filter out movies the user already favorited
-        const filtered = allMovies.filter(
-          (m) => !favorites.some((f) => f.id === m.id)
-        );
+        // Format movies with poster URLs
+        const formatted = movies.map((m) => ({
+          ...m,
+          posterUrl: m.posterUrl
+            ? m.posterUrl
+            : m.posterPath
+            ? `${TMDB_IMAGE_BASE}${m.posterPath}`
+            : "",
+        }));
 
-        // Step 4: Rank movies by genre similarity
-        const ranked = filtered
-          .map((m) => ({
-            ...m,
-            _score: scoreMovie(m, profile),
-            _why: explainReccomendation(m,profile),
-          }))
-          .sort((a, b) => b._score - a._score);
-
-        // Step 5: Take top 12 recommendations
-        setRecommendations(ranked.slice(0, 12));
-      } catch (err) {
-        console.error("Error generating recommendations:", err);
+        setDatasetRecommendations(formatted);
+      } catch (error) {
+        console.error("Recommendation error:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     }
 
-    generateRecommendations();
+    fetchRecommendations();
   }, [favorites]);
 
-  if (loading)
-    return (
-        <p style={{ marginTop: "20px" }}>
-          {lang.startsWith('es')
-            ? 'Cargando recomendaciones...'
-            : lang.startsWith('fr')
-            ? 'Chargement des recommandations...'
-            : 'Loading recommendations...'}
-        </p>
-    );
+  // Fetch AI recommendations (OpenAI-driven) based on favorites
+  useEffect(() => {
+    if (!favorites || favorites.length === 0) {
+      setAiRecommendations([]);
+      return;
+    }
+
+    async function fetchAiRecommendations() {
+      try {
+        setAiLoading(true);
+        setAiError("");
+
+        // Extract favorite movie IDs
+        const favoriteIds = favorites
+          .map((m) => m.id)
+          .filter((id) => id != null && !isNaN(id));
+
+        if (favoriteIds.length === 0) {
+          setAiRecommendations([]);
+          return;
+        }
+
+        const favoriteIdsParam = favoriteIds.join(",");
+        const res = await fetch(
+          `/api/movies/ai-recommendations?favoriteIds=${encodeURIComponent(favoriteIdsParam)}`
+        );
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to fetch AI recommendations');
+        }
+
+        const data = await res.json();
+        const movies = data.movies || [];
+
+        // Format movies with poster URLs
+        const formatted = movies.map((m) => ({
+          ...m,
+          posterUrl: m.posterUrl
+            ? m.posterUrl
+            : m.posterPath
+            ? `${TMDB_IMAGE_BASE}${m.posterPath}`
+            : "",
+        }));
+
+        setAiRecommendations(formatted);
+      } catch (err) {
+        console.error('AI recommendation error:', err);
+        setAiError(err.message);
+      } finally {
+        setAiLoading(false);
+      }
+    }
+
+    fetchAiRecommendations();
+  }, [favorites]);
 
   if (recommendations.length === 0) return null;
 
@@ -162,51 +144,90 @@ export default function MovieRecommendations({ onSelect }) {
           : 'Recommended For You'}
         </h2>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-          gap: "20px",
-        }}
-      >
-        {recommendations.map((movie) => (
-          <div
-            key={movie.id}
-            onClick={() => onSelect(movie)}
-            style={{
-              border: "1px solid #ccc",
-              padding: "10px",
-              borderRadius: "8px",
-              textAlign: "center",
-              cursor: "pointer",
-              background: "white",
-            }}
-          >
-            <img
-              src={
-                movie.posterPath
-                  ? `${TMDB_IMAGE_BASE}${movie.posterPath}`
-                  : ""
-              }
-              alt={movie.title}
-              style={{ width: "100%", borderRadius: "4px" }}
-            />
-            <h4 style={{ marginTop: "8px", fontSize: "0.95rem" }}>
-              {movie.title}
-            </h4>
-            {movie._why && (
-                <p
-                    style={{
-                        marginTop: "4px",
-                        fontSize: "0.8rem",
-                        color: "#555",
-                    }}
-                    >
-                    {movie._why}
-                </p>
-            )}    
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Left: Dataset recommendations (half width) */}
+        <div className="w-full md:w-1/2">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">Dataset</h3>
+            {loading && <span className="text-sm text-gray-500">{t('loading')}</span>}
           </div>
-        ))}
+
+          {error && <p className="text-red-500 mb-2">{error}</p>}
+
+          {!loading && !error && datasetRecommendations.length === 0 && (
+            <p className="text-gray-500">No dataset recommendations yet.</p>
+          )}
+
+          <div className="space-y-4">
+            {datasetRecommendations.map((movie) => (
+              <button
+                key={`dataset-${movie.id}`}
+                type="button"
+                onClick={() => onSelect(movie)}
+                className="w-full relative rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group"
+                style={{
+                  backgroundImage: movie.posterUrl ? `url(${movie.posterUrl})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  minHeight: '160px'
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/30" />
+                <div className="relative p-4 text-white">
+                  <h4 className="text-lg font-bold mb-1 text-shadow-lg">{movie.title}</h4>
+                  {movie.overview && (
+                    <p className="text-sm text-gray-200 line-clamp-2">{movie.overview}</p>
+                  )}
+                </div>
+                {!movie.posterUrl && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: AI recommendations (half width) */}
+        <div className="w-full md:w-1/2">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">AI</h3>
+            {aiLoading && <span className="text-sm text-gray-500">{t('loading')}</span>}
+          </div>
+
+          {aiError && <p className="text-red-500 mb-2">{aiError}</p>}
+
+          {!aiLoading && !aiError && aiRecommendations.length === 0 && (
+            <p className="text-gray-500">No AI recommendations yet.</p>
+          )}
+
+          <div className="space-y-4">
+            {aiRecommendations.map((movie) => (
+              <button
+                key={`ai-${movie.id}`}
+                type="button"
+                onClick={() => onSelect(movie)}
+                className="w-full relative rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group"
+                style={{
+                  backgroundImage: movie.posterUrl ? `url(${movie.posterUrl})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  minHeight: '160px'
+                }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/30" />
+                <div className="relative p-4 text-white">
+                  <h4 className="text-lg font-bold mb-1 text-shadow-lg">{movie.title}</h4>
+                  {movie.overview && (
+                    <p className="text-sm text-gray-200 line-clamp-2">{movie.overview}</p>
+                  )}
+                </div>
+                {!movie.posterUrl && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

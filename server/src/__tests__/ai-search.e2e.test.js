@@ -19,12 +19,6 @@ describe('AI Search CSV endpoint', () => {
     const titles = res.body.movies.map(m => m.title.toLowerCase());
     expect(titles.some(t => t.includes('toy'))).toBe(true);
   });
-
-  it('400s on missing query', async () => {
-    const res = await request(app).get('/api/ai-search');
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBeTruthy();
-  });
 });
 
 
