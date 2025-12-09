@@ -1,0 +1,100 @@
+stateDiagram-v2
+CineQuerySystemStateChart
+    
+    [*] --> Idle
+    
+    state Idle
+    state Searching
+    state ResultsActive
+    state NoResults
+    state ErrorState
+    state MovieDetails
+    state Favorites
+    
+    %% Main flow transitions
+    Idle --> Searching : User searches
+    Searching --> ResultsActive : Movies found
+    Searching --> NoResults : No movies found
+    Searching --> ErrorState : API error
+    NoResults --> Searching : User retries
+    NoResults --> Idle : User clears search
+    ErrorState --> Searching : User retries
+    ErrorState --> Idle : User dismisses error
+    ResultsActive --> Searching : New search
+    ResultsActive --> MovieDetails : Click movie
+    MovieDetails --> ResultsActive : Close details
+    MovieDetails --> Favorites : Navigate to favorites
+    
+    %% Navigation transitions
+    Idle --> Favorites : Navigate to favorites
+    ResultsActive --> Favorites : Navigate to favorites
+    Favorites --> Idle : Navigate to home
+    Favorites --> MovieDetails : Click favorite
+    
+    %% State notes
+    note right of Idle
+        Display featured movies
+        Show search interface
+        Display carousels
+        State variables
+        movies empty
+        loading false
+    end note
+    
+    note right of Searching
+        API request in progress
+        Show loading indicator
+        State variables
+        loading true
+        movies empty
+        API endpoints
+        api search
+        api ai-search
+    end note
+    
+    note right of ResultsActive
+        Display search results
+        Show movie grid
+        Carousels visible
+        State variables
+        loading false
+        movies populated
+    end note
+    
+    note right of NoResults
+        Display no results message
+        Carousels still visible
+        State variables
+        loading false
+        movies empty
+    end note
+    
+    note right of ErrorState
+        Display error message
+        Allow retry
+        State variables
+        loading false
+        error present
+    end note
+    
+    note right of MovieDetails
+        Display movie information
+        Show where to watch
+        Favorites button
+        State variables
+        selected movie object
+        movieData fetched
+        API endpoint:
+        api movies details by id
+    end note
+    
+    note right of Favorites
+        Display favorite movies
+        Show recommendations
+        State variables
+        view favorites
+        selected null or movie object
+        Data source
+        FavoritesContext
+        LocalStorage
+    end note
