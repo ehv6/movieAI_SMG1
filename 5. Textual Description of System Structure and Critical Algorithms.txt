@@ -1,0 +1,122 @@
+5. Textual Description of System Structure and Critical Algorithms
+
+System Overview:
+
+Purpose: A demo movie application that provides search, browsing (TMDB-backed), and recommendations (rule-based + AI-assisted) via a server API and a client UI.
+Layers:
+Client: Single-page app in client (React + Vite) that handles UI, favorites, search, and displays results.
+Server: Node/Express-like HTTP API in src providing search, recommendations, TMDB integration, and AI-powered query/recommendation features.
+Data: Primary dataset is movies_metadata.csv used for offline search and recommendations (loaded into memory / in-memory SQLite).
+High-level file mappings:
+
+Server entry and routing: server.js, server/src/routes/*
+Controllers: server/src/controllers/* — e.g., SearchController.js, RecommendationController.js
+Services (algorithms & external integrations): server/src/services/* — RecommendationService.js, AiQueryService.js, TmdbService.js, CsvMovieRepository.js
+Model mapping: Movie.js
+Client components: client/src/components/* (UI logic, favorites, search bar, movie detail components)
+Data flow (common cases):
+
+Client issues request -> appropriate controller -> calls service(s) -> returns JSON to client.
+Search (TMDB): SearchController -> TmdbService.searchMovies() -> TMDB API -> map to Movie model -> client.
+Offline / AI search: client -> AiQueryService.search(query) -> generates SQL via OpenAI -> run SQL on in-memory SQLite loaded from CSV -> map rows -> client.
+Recommendations:
+Rule-based: client -> RecommendationController.getRecommendations -> RecommendationService.getRecommendations(favoriteIds) -> in-memory DB lookup by genre/popularity -> client.
+AI-assisted: client -> RecommendationController.getAiRecommendations -> RecommendationService.getAiRecommendations(favoriteIds) -> OpenAI suggests titles -> lookup in DB -> client.
+Critical implemented algorithms and behavior (detailed):
+
+CSV loading into an in-memory SQLite database
+
+Implemented in RecommendationService.js and AiQueryService.js (shared pattern).
+Steps:
+Parse CSV (csv-parse/sync) into rows.
+Create an in-memory SQLite DB (better-sqlite3).
+Create movies table with columns matching CSV schema.
+Bulk INSERT OR IGNORE rows inside a transaction for speed.
+Complexity/notes: Single-pass insertion O(n) where n = number of rows in CSV. Using transaction + prepared insert improves speed and ensures consistent reads during the request lifetime.
+Genre extraction & matching
+
+parseGenres helper parses the genres JSON-ish string from CSV rows (attempts JSON.parse; falls back safely).
+When selecting movies for a genre, the code constructs a LIKE pattern (e.g., %'name': 'Drama'%) and queries WHERE genres LIKE ?. This is a pragmatic approach to search JSON-like strings inside CSV content without full JSON indexing.
+Filtering: excludes favorites, requires vote_count >= 10, and orders by popularity DESC, vote_average DESC.
+Rule-based Recommendation (implemented in RecommendationService.getRecommendations)
+
+Input: array of favorite movie IDs.
+Operation:
+Load in-memory DB and fetch full records for provided favorite IDs.
+Use OpenAI (identifyStrongestGenre) to determine the single strongest genre from favorite movies (see next item for OpenAI use).
+Query DB for top movies with that genre (excluding input favorites), apply filters and ordering, return up to 6 results.
+Design rationale: lightweight personalization by guessing a dominant genre; simple popularity/vote filters to prefer mainstream/consistent results.
+AI-assisted genre detection and recommendations (OpenAI integration)
+
+Files: RecommendationService.js (both identifyStrongestGenre and getAiRecommendations) and AiQueryService.js (natural language -> SQL).
+Models used: OpenAI client configured to call gpt-4o-mini in current code.
+identifyStrongestGenre:
+Builds a short prompt listing favorite movie titles and a fixed set of available genres.
+Instructs model to return only a single genre name from that exact list.
+Post-processes response: trims quotes, validates against allowed genres.
+getAiRecommendations:
+Sends favorite movie titles and asks OpenAI to return exactly a JSON array of 6 movie titles.
+The server then attempts to find those titles in the in-memory DB and returns matched records.
+Safety & robustness measures:
+Response cleanup (strip code fences, trim).
+Validation that OpenAI outputs match expectations (e.g., check that returned genre is one of the allowed list; parse JSON arrays; guard against empty/invalid outputs).
+Limitations:
+OpenAI outputs are probabilistic; the code contains defensive parsing but may return fewer than requested recommendations if titles aren't found in the CSV.
+Natural language -> SQL (AI search) in AiQueryService
+
+Purpose: convert a user's free-text search intent into a safe, runnable SQLite SELECT statement that returns movie fields.
+Implementation details:
+Build a prompt that describes the CSV/SQLite schema and constraints (field names, types).
+Ask OpenAI to generate an SQL SELECT that returns columns: id, title, overview, release_date, genres, popularity, poster_path, original_language.
+Post-process the generated SQL (strip code fences, ensure it ends with ;).
+Safety check: ensure the statement starts with SELECT (uppercase check) to prevent non-SELECT modifications.
+Execute the query against the in-memory SQLite DB and map results to movie objects.
+Important caveat: Only prefix-checking is used to allow only SELECTs — this is a pragmatic guard but not a full-proof SQL AST validation. Inputs from the model are validated minimally and then executed directly; the system depends on the model following instructions.
+CSV Repository (caching) — CsvMovieRepository.js
+
+Simple caching wrapper: getAllMovies() parses CSV once and caches parsed rows in memory (cachedMovies) for repeat queries to reduce file I/O.
+clearCache() exists to force reload during testing or data refresh.
+TMDB Integration — TmdbService.js
+
+Thin API client to TMDB endpoints (search, discover, popular, now playing, movie details, watch providers).
+Maps TMDB responses into Movie objects (Movie.js).
+Handles HTTP/network errors and normalizes them for controllers.
+Key helper behaviors and mapping:
+
+mapDbRowToMovie functions provided in services normalize DB rows into the API response shape (fields like id, title, overview, releaseDate, genres, popularity, posterPath, voteAverage, voteCount).
+Movie model (Movie.js) constructs poster URL and defaults for missing poster images.
+Failure modes, safety, and trade-offs:
+
+Reliance on OpenAI:
+Pros: flexible natural-language capabilities (genre inference, SQL generation, creative recommendations).
+Cons: outputs are probabilistic and must be parsed/validated; may return titles not in CSV; latency and cost overhead.
+SQL safety:
+The code performs a prefix check (must start with SELECT) but does not perform full AST sanitization — this is a pragmatic safety check but not infallible. If you require production safety, add stricter SQL parsing or a whitelist-based query builder layer.
+Database usage:
+In-memory SQLite is fast for per-request queries, but the CSV is reloaded for each request in some paths (loadCsvIntoDatabase() is called per request in AiQueryService and RecommendationService). This simplifies stateless servers but may increase latency; caching can be used to avoid repeated loads (similar to CsvMovieRepository approach).
+Genre matching via LIKE over JSON strings is brittle vs. a normalized schema; it works for CSV stored JSON dumps but can fail on inconsistent formatting.
+Files to review for each algorithm:
+
+CSV load & recommendation logic: RecommendationService.js
+AI -> SQL search: AiQueryService.js
+CSV caching: CsvMovieRepository.js
+TMDB integration: TmdbService.js
+Controllers exposing endpoints: SearchController.js, RecommendationController.js
+Model mapping: Movie.js
+Short pseudocode (core flows):
+
+RecommendationService.getRecommendations(favoriteIds):
+
+db = loadCsvIntoDatabase()
+favoriteMovies = db.query(ids IN favoriteIds)
+strongestGenre = identifyStrongestGenre(favoriteMovies) // OpenAI
+if no genre -> return []
+results = db.query(WHERE genres LIKE '%"name": "strongestGenre"%' AND id NOT IN favoriteIds AND vote_count >= 10 ORDER BY popularity DESC, vote_average DESC LIMIT 6)
+return mapped results
+AiQueryService.search(query):
+
+sql = generateSqlQuery(query) // OpenAI
+assert sql starts with SELECT
+db = loadCsvIntoDatabase()
+results = db.execute(sql)
+return mapped results
